@@ -83,7 +83,7 @@
   /* Tab switcher */
   .tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -93,13 +93,13 @@
 
   .tab {
     -webkit-appearance: none;
-    padding: 9px 4px;
+    padding: 10px 4px;
     border-radius: 9px;
     border: none;
     background: transparent;
     color: var(--muted);
     font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
@@ -230,11 +230,22 @@
     margin-bottom: 14px;
   }
 
+  .source-badge {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 2px 7px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
   /* Number input */
   .num-input-wrap {
     display: flex;
     align-items: center;
-    gap: 0;
     background: var(--surface2);
     border-radius: 12px;
     overflow: hidden;
@@ -243,11 +254,11 @@
 
   .num-btn {
     -webkit-appearance: none;
-    width: 48px; height: 52px;
+    width: 52px; height: 56px;
     background: transparent;
     border: none;
     color: var(--accent);
-    font-size: 24px;
+    font-size: 26px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
@@ -262,14 +273,13 @@
     outline: none;
     text-align: center;
     font-family: 'Space Mono', monospace;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
     color: var(--text);
     padding: 0;
     -moz-appearance: textfield;
     min-width: 0;
   }
-
   .num-input::-webkit-outer-spin-button,
   .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
@@ -298,10 +308,9 @@
     outline: none;
     cursor: pointer;
   }
-
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 22px; height: 22px;
+    width: 24px; height: 24px;
     border-radius: 50%;
     background: var(--accent);
     box-shadow: 0 0 0 4px var(--accent-dim);
@@ -310,11 +319,18 @@
 
   .slider-val {
     font-family: 'Space Mono', monospace;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--accent);
-    min-width: 48px;
+    min-width: 52px;
     text-align: right;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.5;
   }
 
   /* Alert */
@@ -325,28 +341,8 @@
     line-height: 1.5;
     display: none;
   }
-  .alert.warn { background: rgba(255,184,48,0.1); border: 1px solid rgba(255,184,48,0.3); color: var(--warn); display: block; }
-  .alert.danger { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.35); color: var(--danger); display: block; }
-
-  /* Source badge */
-  .source-badge {
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: var(--accent-dim);
-    color: var(--accent);
-    border-radius: 6px;
-    padding: 2px 7px;
-    display: inline-block;
-    margin-bottom: 10px;
-  }
-
-  .hint {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 8px;
-    line-height: 1.5;
-  }
+  .alert.warn  { background: rgba(255,184,48,0.1);  border: 1px solid rgba(255,184,48,0.3);  color: var(--warn);   display: block; }
+  .alert.danger{ background: rgba(255,77,77,0.1);   border: 1px solid rgba(255,77,77,0.35);  color: var(--danger); display: block; }
 </style>
 </head>
 <body>
@@ -367,9 +363,8 @@
 
   <!-- Tab switcher -->
   <div class="tabs">
-    <button class="tab active" onclick="setTab('byd')" id="tab-byd">BYD App<br>%</button>
-    <button class="tab" onclick="setTab('obd')" id="tab-obd">OBD2<br>%</button>
-    <button class="tab" onclick="setTab('km')" id="tab-km">Dashboard<br>km range</button>
+    <button class="tab active" onclick="setTab('byd')" id="tab-byd">BYD App %</button>
+    <button class="tab" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
   </div>
 
   <!-- Hero -->
@@ -398,55 +393,39 @@
 
   <!-- Input card -->
   <div class="card">
-    <div class="card-title" id="input-title">Enter BYD App reading</div>
 
-    <!-- BYD % input -->
+    <!-- BYD App % -->
     <div id="input-byd">
       <div class="source-badge">BYD App %</div>
       <div class="num-input-wrap">
-        <button class="num-btn" onclick="nudge('byd',-1)">−</button>
-        <input class="num-input" type="number" id="val-byd" min="0" max="100" value="" placeholder="0" oninput="update()">
+        <button class="num-btn" onclick="nudge('byd', -1)">−</button>
+        <input class="num-input" type="number" id="val-byd" min="0" max="100" placeholder="0" oninput="update()">
         <div class="num-unit">%</div>
-        <button class="num-btn" onclick="nudge('byd',1)">+</button>
+        <button class="num-btn" onclick="nudge('byd', 1)">+</button>
       </div>
       <div class="slider-row">
-        <input type="range" id="slider-byd" min="0" max="99" step="1" value="0" oninput="syncSlider('byd')">
+        <input type="range" id="slider-byd" min="0" max="100" step="1" value="0" oninput="syncSlider('byd')">
         <div class="slider-val" id="slval-byd">0%</div>
       </div>
-      <div class="hint">Enter the percentage shown in your BYD app or on the dashboard.</div>
+      <div class="hint">Enter the fuel percentage shown in your BYD app or on the dashboard display.</div>
     </div>
 
-    <!-- OBD2 % input -->
-    <div id="input-obd" style="display:none">
-      <div class="source-badge">OBD2 %</div>
-      <div class="num-input-wrap">
-        <button class="num-btn" onclick="nudge('obd',-1)">−</button>
-        <input class="num-input" type="number" id="val-obd" min="0" max="100" value="" placeholder="0" oninput="update()">
-        <div class="num-unit">%</div>
-        <button class="num-btn" onclick="nudge('obd',1)">+</button>
-      </div>
-      <div class="slider-row">
-        <input type="range" id="slider-obd" min="0" max="100" step="0.1" value="0" oninput="syncSlider('obd')">
-        <div class="slider-val" id="slval-obd">0%</div>
-      </div>
-      <div class="hint">Enter the fuel level % from your OBD2 dongle app.</div>
-    </div>
-
-    <!-- KM range input -->
+    <!-- Dashboard km range -->
     <div id="input-km" style="display:none">
       <div class="source-badge">Dashboard km range</div>
       <div class="num-input-wrap">
-        <button class="num-btn" onclick="nudge('km',-5)">−</button>
-        <input class="num-input" type="number" id="val-km" min="0" max="900" value="" placeholder="0" oninput="update()">
+        <button class="num-btn" onclick="nudge('km', -5)">−</button>
+        <input class="num-input" type="number" id="val-km" min="0" max="700" placeholder="0" oninput="update()">
         <div class="num-unit">km</div>
-        <button class="num-btn" onclick="nudge('km',5)">+</button>
+        <button class="num-btn" onclick="nudge('km', 5)">+</button>
       </div>
       <div class="slider-row">
-        <input type="range" id="slider-km" min="0" max="699" step="1" value="0" oninput="syncSlider('km')">
+        <input type="range" id="slider-km" min="0" max="700" step="1" value="0" oninput="syncSlider('km')">
         <div class="slider-val" id="slval-km">0 km</div>
       </div>
-      <div class="hint">Enter the estimated range shown on your dashboard (km).</div>
+      <div class="hint">Enter the estimated driving range shown on your dashboard (km).</div>
     </div>
+
   </div>
 
 </main>
@@ -458,77 +437,89 @@ if ('serviceWorker' in navigator) {
 
 (function () {
 
-  // ── Calibration tables (piecewise linear) ─────────────────────────────────
-  // [input_value, actual_litres]
-  const BYD_TABLE = [[0,5],[12,25],[38,45],[68,60],[83,70],[99,80]];
-  const OBD_TABLE = [[4.71,5],[14.9,25],[38.06,45],[63.14,60],[78.04,70],[93.33,80]];
-  const KM_TABLE  = [[0,5],[106,25],[276,45],[475,60],[581,70],[699,80]];
-  const TANK_CAP  = 80;
+  // ── Calibration tables ─────────────────────────────────────────────────────
+  // Built from real BYD measurements; extrapolated to 100% / 700km
+  // Format: [input_value, actual_litres_in_tank]
+  const BYD_TABLE = [
+    [0,   5.0],
+    [12,  25.0],
+    [38,  45.0],
+    [68,  60.0],
+    [83,  70.0],
+    [99,  80.0],
+    [100, 80.62]
+  ];
 
+  const KM_TABLE = [
+    [0,   5.0],
+    [106, 25.0],
+    [276, 45.0],
+    [475, 60.0],
+    [581, 70.0],
+    [699, 80.0],
+    [700, 80.08]
+  ];
+
+  const TANK_CAP = 80;
+
+  // Piecewise linear interpolation
   function interp(val, table) {
     if (val <= table[0][0]) return table[0][1];
-    if (val >= table[table.length-1][0]) return table[table.length-1][1];
+    if (val >= table[table.length - 1][0]) return table[table.length - 1][1];
     for (let i = 0; i < table.length - 1; i++) {
       const [x0, y0] = table[i];
-      const [x1, y1] = table[i+1];
+      const [x1, y1] = table[i + 1];
       if (val >= x0 && val <= x1) {
         const t = (val - x0) / (x1 - x0);
         return y0 + t * (y1 - y0);
       }
     }
-    return table[table.length-1][1];
+    return table[table.length - 1][1];
   }
 
-  // Convert litres -> % of tank for gauge bar
-  function litresToPct(l) { return Math.min(100, Math.max(0, (l / TANK_CAP) * 100)); }
+  function litresToPct(l) {
+    return Math.min(100, Math.max(0, (l / TANK_CAP) * 100));
+  }
 
   function getColor(pct) {
-    if (pct <= 10) return '#ff4d4d';
-    if (pct <= 25) return '#ffb830';
+    if (pct <= 12) return '#ff4d4d';
+    if (pct <= 30) return '#ffb830';
     return '#2dff8f';
   }
 
-  // ── Current tab ────────────────────────────────────────────────────────────
   let activeTab = 'byd';
 
-  window.setTab = function(tab) {
+  window.setTab = function (tab) {
     activeTab = tab;
-    ['byd','obd','km'].forEach(t => {
+    ['byd', 'km'].forEach(t => {
       document.getElementById('tab-' + t).classList.toggle('active', t === tab);
       document.getElementById('input-' + t).style.display = t === tab ? 'block' : 'none';
     });
     update();
   };
 
-  // ── Nudge buttons ──────────────────────────────────────────────────────────
-  window.nudge = function(tab, delta) {
+  window.nudge = function (tab, delta) {
     const el = document.getElementById('val-' + tab);
-    const cur = parseFloat(el.value) || 0;
-    const max = tab === 'km' ? 699 : 100;
-    el.value = Math.min(max, Math.max(0, cur + delta));
+    const max = tab === 'km' ? 700 : 100;
+    el.value = Math.min(max, Math.max(0, (parseFloat(el.value) || 0) + delta));
     syncInput(tab);
     update();
   };
 
-  // ── Slider -> input sync ───────────────────────────────────────────────────
-  window.syncSlider = function(tab) {
-    const slider = document.getElementById('slider-' + tab);
-    document.getElementById('val-' + tab).value = slider.value;
-    const unit = tab === 'km' ? ' km' : '%';
-    document.getElementById('slval-' + tab).textContent = slider.value + unit;
+  window.syncSlider = function (tab) {
+    const val = document.getElementById('slider-' + tab).value;
+    document.getElementById('val-' + tab).value = val;
+    document.getElementById('slval-' + tab).textContent = val + (tab === 'km' ? ' km' : '%');
     update();
   };
 
-  // ── Input -> slider sync ───────────────────────────────────────────────────
   function syncInput(tab) {
     const val = parseFloat(document.getElementById('val-' + tab).value) || 0;
     document.getElementById('slider-' + tab).value = val;
-    const unit = tab === 'km' ? ' km' : '%';
-    document.getElementById('slval-' + tab).textContent = val + unit;
+    document.getElementById('slval-' + tab).textContent = val + (tab === 'km' ? ' km' : '%');
   }
 
-  // ── Main update ────────────────────────────────────────────────────────────
-  window.update = function() {
+  window.update = function () {
     const el = document.getElementById('val-' + activeTab);
     const raw = parseFloat(el.value);
     syncInput(activeTab);
@@ -541,7 +532,7 @@ if ('serviceWorker' in navigator) {
       return;
     }
 
-    const table = activeTab === 'byd' ? BYD_TABLE : activeTab === 'obd' ? OBD_TABLE : KM_TABLE;
+    const table = activeTab === 'byd' ? BYD_TABLE : KM_TABLE;
     const litres = interp(raw, table);
     const toFill = Math.max(0, TANK_CAP - litres);
     const tankPct = litresToPct(litres);
