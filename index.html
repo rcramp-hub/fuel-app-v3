@@ -398,10 +398,8 @@
     <div id="input-byd">
       <div class="source-badge">BYD App %</div>
       <div class="num-input-wrap">
-        <button class="num-btn" onclick="nudge('byd', -1)">−</button>
         <input class="num-input" type="number" id="val-byd" min="0" max="100" placeholder="0" oninput="update()">
         <div class="num-unit">%</div>
-        <button class="num-btn" onclick="nudge('byd', 1)">+</button>
       </div>
       <div class="slider-row">
         <input type="range" id="slider-byd" min="0" max="100" step="1" value="0" oninput="syncSlider('byd')">
@@ -414,10 +412,8 @@
     <div id="input-km" style="display:none">
       <div class="source-badge">Dashboard km range</div>
       <div class="num-input-wrap">
-        <button class="num-btn" onclick="nudge('km', -5)">−</button>
         <input class="num-input" type="number" id="val-km" min="0" max="700" placeholder="0" oninput="update()">
         <div class="num-unit">km</div>
-        <button class="num-btn" onclick="nudge('km', 5)">+</button>
       </div>
       <div class="slider-row">
         <input type="range" id="slider-km" min="0" max="700" step="1" value="0" oninput="syncSlider('km')">
