@@ -363,8 +363,8 @@
 
   <!-- Tab switcher -->
   <div class="tabs">
-    <button class="tab active" onclick="setTab('byd')" id="tab-byd">BYD App %</button>
-    <button class="tab" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
+    <button class="tab active" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
+    <button class="tab" onclick="setTab('byd')" id="tab-byd">BYD App %</button>
   </div>
 
   <!-- Hero -->
@@ -395,7 +395,7 @@
   <div class="card">
 
     <!-- BYD App % -->
-    <div id="input-byd">
+    <div id="input-byd" style="display:none">
       <div class="source-badge">BYD App %</div>
       <div class="num-input-wrap">
         <input class="num-input" type="number" id="val-byd" min="0" max="100" placeholder="0" oninput="update()">
@@ -409,7 +409,7 @@
     </div>
 
     <!-- Dashboard km range -->
-    <div id="input-km" style="display:none">
+    <div id="input-km">
       <div class="source-badge">Dashboard km range</div>
       <div class="num-input-wrap">
         <input class="num-input" type="number" id="val-km" min="0" max="700" placeholder="0" oninput="update()">
@@ -483,7 +483,7 @@ if ('serviceWorker' in navigator) {
     return '#2dff8f';
   }
 
-  let activeTab = 'byd';
+  let activeTab = 'km';
 
   window.setTab = function (tab) {
     activeTab = tab;
@@ -494,13 +494,30 @@ if ('serviceWorker' in navigator) {
     update();
   };
 
-  window.nudge = function (tab, delta) {
-    const el = document.getElementById('val-' + tab);
-    const max = tab === 'km' ? 700 : 100;
-    el.value = Math.min(max, Math.max(0, (parseFloat(el.value) || 0) + delta));
-    syncInput(tab);
-    update();
-  };
+  // Reverse interpolation: given litres, find input value for a given table
+  function reverseInterp(litres, table) {
+    if (litres <= table[0][1]) return table[0][0];
+    if (litres >= table[table.length - 1][1]) return table[table.length - 1][0];
+    for (let i = 0; i < table.length - 1; i++) {
+      const [x0, y0] = table[i];
+      const [x1, y1] = table[i + 1];
+      if (litres >= y0 && litres <= y1) {
+        const t = (litres - y0) / (y1 - y0);
+        return x0 + t * (x1 - x0);
+      }
+    }
+    return table[table.length - 1][0];
+  }
+
+  // Update the inactive tab's input and slider to match current litres
+  function syncOtherTab(litres) {
+    const otherTab = activeTab === 'byd' ? 'km' : 'byd';
+    const otherTable = otherTab === 'byd' ? BYD_TABLE : KM_TABLE;
+    const otherVal = Math.round(reverseInterp(litres, otherTable));
+    document.getElementById('val-' + otherTab).value = otherVal;
+    document.getElementById('slider-' + otherTab).value = otherVal;
+    document.getElementById('slval-' + otherTab).textContent = otherVal + (otherTab === 'km' ? ' km' : '%');
+  }
 
   window.syncSlider = function (tab) {
     const val = document.getElementById('slider-' + tab).value;
@@ -551,6 +568,9 @@ if ('serviceWorker' in navigator) {
       alert.className = 'alert warn';
       alert.textContent = 'Getting low — about ' + litres.toFixed(1) + ' L left. Consider filling up soon.';
     }
+
+    // Keep the other tab in sync
+    syncOtherTab(litres);
   };
 
 })();
