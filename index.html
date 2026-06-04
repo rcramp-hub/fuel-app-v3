@@ -485,6 +485,20 @@ if ('serviceWorker' in navigator) {
 
   let activeTab = 'km';
 
+  // Restore last saved tab and value
+  try {
+    const savedTab = localStorage.getItem('fuelTab');
+    const savedVal = localStorage.getItem('fuelVal');
+    if (savedTab) activeTab = savedTab;
+    ['byd', 'km'].forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === activeTab);
+      document.getElementById('input-' + t).style.display = t === activeTab ? 'block' : 'none';
+    });
+    if (savedVal) {
+      document.getElementById('val-' + activeTab).value = savedVal;
+    }
+  } catch(e) {}
+
   window.setTab = function (tab) {
     activeTab = tab;
     ['byd', 'km'].forEach(t => {
@@ -571,7 +585,16 @@ if ('serviceWorker' in navigator) {
 
     // Keep the other tab in sync
     syncOtherTab(litres);
+
+    // Save last used tab and value to localStorage
+    try {
+      localStorage.setItem('fuelTab', activeTab);
+      localStorage.setItem('fuelVal', raw);
+    } catch(e) {}
   };
+
+  // Render restored value on load
+  update();
 
 })();
 </script>
