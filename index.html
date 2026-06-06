@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- © 2026 Ryan Cramp — All Rights Reserved. BYD Fuel Calculator. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -73,14 +74,13 @@
 
   main {
     flex: 1;
-    padding: 20px 20px 28px;
+    padding: 20px 20px 10px;
     display: flex;
     flex-direction: column;
     gap: 14px;
     overflow-y: auto;
   }
 
-  /* Tab switcher */
   .tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -112,7 +112,6 @@
     border: 1px solid var(--accent-mid);
   }
 
-  /* Hero */
   .hero {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -183,7 +182,6 @@
     font-family: 'Space Mono', monospace;
   }
 
-  /* Stats */
   .stat-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -209,25 +207,16 @@
     font-family: 'Space Mono', monospace;
     font-size: 22px;
     font-weight: 700;
-    color: var(--text);
+    color: var(--accent);
   }
 
   .stat-val span { font-size: 13px; color: var(--muted); font-weight: 400; }
 
-  /* Input card */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 18px 18px 14px;
-  }
-
-  .card-title {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 14px;
   }
 
   .source-badge {
@@ -242,7 +231,6 @@
     margin-bottom: 10px;
   }
 
-  /* Number input */
   .num-input-wrap {
     display: flex;
     align-items: center;
@@ -251,20 +239,6 @@
     overflow: hidden;
     border: 1px solid var(--border);
   }
-
-  .num-btn {
-    -webkit-appearance: none;
-    width: 52px; height: 56px;
-    background: transparent;
-    border: none;
-    color: var(--accent);
-    font-size: 26px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.15s;
-  }
-  .num-btn:active { background: var(--accent-dim); }
 
   .num-input {
     flex: 1;
@@ -291,7 +265,6 @@
     white-space: nowrap;
   }
 
-  /* Slider */
   .slider-row {
     display: flex;
     align-items: center;
@@ -333,7 +306,6 @@
     line-height: 1.5;
   }
 
-  /* Alert */
   .alert {
     border-radius: 12px;
     padding: 12px 16px;
@@ -341,8 +313,177 @@
     line-height: 1.5;
     display: none;
   }
-  .alert.warn  { background: rgba(255,184,48,0.1);  border: 1px solid rgba(255,184,48,0.3);  color: var(--warn);   display: block; }
-  .alert.danger{ background: rgba(255,77,77,0.1);   border: 1px solid rgba(255,77,77,0.35);  color: var(--danger); display: block; }
+  .alert.warn   { background: rgba(255,184,48,0.1); border: 1px solid rgba(255,184,48,0.3); color: var(--warn);   display: block; }
+  .alert.danger { background: rgba(255,77,77,0.1);  border: 1px solid rgba(255,77,77,0.35); color: var(--danger); display: block; }
+
+  /* ── Settings button ──────────────────────────────────────────────────────── */
+  .settings-btn {
+    -webkit-appearance: none;
+    width: 100%;
+    margin: 4px 0 18px;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .settings-btn:active, .settings-btn.open {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+  .settings-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .settings-chevron { transition: transform 0.3s; }
+  .settings-btn.open .settings-chevron { transform: rotate(180deg); }
+
+  /* ── Settings panel ───────────────────────────────────────────────────────── */
+  .settings-panel {
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 20px 32px;
+  }
+  .settings-panel.open { display: flex; }
+
+  .settings-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .settings-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 10px 16px 14px;
+  }
+
+  /* Calibration table */
+  .cal-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .cal-table th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 10px 8px 8px;
+    text-align: center;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+  }
+  .cal-table th:first-child { text-align: left; padding-left: 16px; }
+
+  .cal-table td {
+    padding: 5px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .cal-table td:first-child { padding-left: 16px; text-align: left; }
+  .cal-table tr:last-child td { border-bottom: none; }
+
+  .row-litres {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .cal-default {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.4;
+    display: block;
+    padding: 4px 0;
+  }
+
+  .cal-input {
+    -webkit-appearance: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    width: 72px;
+    padding: 7px 4px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .cal-input::-webkit-outer-spin-button,
+  .cal-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .cal-input:focus {
+    border-color: var(--accent-mid);
+    background: rgba(45,255,143,0.05);
+  }
+  .cal-input.modified {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+
+  /* Settings actions */
+  .settings-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .s-btn {
+    -webkit-appearance: none;
+    padding: 11px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .s-btn:active { background: var(--surface); }
+  .s-btn.primary {
+    background: var(--accent-dim);
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+  .s-btn.primary:active { background: rgba(45,255,143,0.22); }
+
+  .save-confirm {
+    font-size: 12px;
+    color: var(--accent);
+    text-align: center;
+    padding: 0 16px 14px;
+    min-height: 18px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .save-confirm.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -361,13 +502,11 @@
 
 <main>
 
-  <!-- Tab switcher -->
   <div class="tabs">
     <button class="tab active" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
     <button class="tab" onclick="setTab('byd')" id="tab-byd">BYD App %</button>
   </div>
 
-  <!-- Hero -->
   <div class="hero">
     <div class="hero-label">Fuel remaining</div>
     <div class="hero-num" id="litres">—</div>
@@ -387,14 +526,24 @@
     </div>
     <div class="stat">
       <div class="stat-label">Tank capacity seen by fuel sender</div>
-      <div class="stat-val">80 <span>L</span></div>
+      <div class="stat-val" id="tank-cap-display">— <span>L</span></div>
     </div>
   </div>
 
-  <!-- Input card -->
   <div class="card">
+    <div id="input-km">
+      <div class="source-badge">Dashboard km range</div>
+      <div class="num-input-wrap">
+        <input class="num-input" type="number" id="val-km" min="0" max="1200" placeholder="0" oninput="update()">
+        <div class="num-unit">km</div>
+      </div>
+      <div class="slider-row">
+        <input type="range" id="slider-km" min="0" max="700" step="1" value="0" oninput="syncSlider('km')">
+        <div class="slider-val" id="slval-km">0 km</div>
+      </div>
+      <div class="hint">Enter the estimated driving range shown on your dashboard (km).</div>
+    </div>
 
-    <!-- BYD App % -->
     <div id="input-byd" style="display:none">
       <div class="source-badge">BYD App %</div>
       <div class="num-input-wrap">
@@ -407,24 +556,72 @@
       </div>
       <div class="hint">Enter the fuel percentage shown in your BYD app or on the dashboard display.</div>
     </div>
-
-    <!-- Dashboard km range -->
-    <div id="input-km">
-      <div class="source-badge">Dashboard km range</div>
-      <div class="num-input-wrap">
-        <input class="num-input" type="number" id="val-km" min="0" max="700" placeholder="0" oninput="update()">
-        <div class="num-unit">km</div>
-      </div>
-      <div class="slider-row">
-        <input type="range" id="slider-km" min="0" max="700" step="1" value="0" oninput="syncSlider('km')">
-        <div class="slider-val" id="slval-km">0 km</div>
-      </div>
-      <div class="hint">Enter the estimated driving range shown on your dashboard (km).</div>
-    </div>
-
   </div>
 
+  <button class="settings-btn" id="settings-btn" onclick="toggleSettings()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    Settings — Calibration Data
+    <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+
 </main>
+
+<!-- Settings panel -->
+<div class="settings-panel" id="settings-panel">
+
+  <!-- Dashboard KM table -->
+  <div class="settings-section">
+    <div class="settings-section-title">Dashboard km range at each fuel level</div>
+    <table class="cal-table">
+      <thead>
+        <tr>
+          <th>Fuel in tank</th>
+          <th>Default km</th>
+          <th>Your km</th>
+        </tr>
+      </thead>
+      <tbody id="km-tbody"></tbody>
+    </table>
+    <div class="settings-note">
+      Fill your tank to each level and note what km range your dashboard shows.
+      Greyed values are the original BYD calibration data for reference.
+    </div>
+  </div>
+
+  <!-- BYD App % table -->
+  <div class="settings-section">
+    <div class="settings-section-title">BYD App % at each fuel level</div>
+    <table class="cal-table">
+      <thead>
+        <tr>
+          <th>Fuel in tank</th>
+          <th>Default %</th>
+          <th>Your %</th>
+        </tr>
+      </thead>
+      <tbody id="byd-tbody"></tbody>
+    </table>
+    <div class="settings-note">
+      Fill your tank to each level and note what % your BYD app shows.
+      Greyed values are the original BYD calibration data for reference.
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="settings-section">
+    <div class="settings-actions">
+      <button class="s-btn" onclick="resetToDefaults()">Reset to defaults</button>
+      <button class="s-btn primary" onclick="saveSettings()">Save &amp; apply</button>
+    </div>
+    <div class="save-confirm" id="save-confirm">✓ Calibration saved and applied</div>
+  </div>
+
+</div>
 
 <script>
 if ('serviceWorker' in navigator) {
@@ -433,35 +630,61 @@ if ('serviceWorker' in navigator) {
 
 (function () {
 
-  // ── Calibration tables ─────────────────────────────────────────────────────
-  // Built from real BYD measurements; extrapolated to 100% / 700km
-  // Format: [input_value, actual_litres_in_tank]
-  const BYD_TABLE = [
-    [0,   5.0],
-    [12,  25.0],
-    [38,  45.0],
-    [68,  60.0],
-    [83,  70.0],
-    [99,  80.0],
-    [100, 80.62]
-  ];
+  // ── Fixed litre rows ───────────────────────────────────────────────────────
+  // These never change — they are the reference points the user calibrates against
+  const FIXED_LITRES = [10, 20, 30, 40, 50, 60, 70, 80];
 
-  const KM_TABLE = [
-    [0,   5.0],
-    [106, 25.0],
-    [276, 45.0],
-    [475, 60.0],
-    [581, 70.0],
-    [699, 80.0],
-    [700, 80.08]
-  ];
+  // ── Default readings at each litre level (from original BYD data) ──────────
+  // Format: value the instrument shows when tank has that many litres
+  const DEFAULT_KM  = [0,   106, 106, 276, 276, 475, 581, 699];
+  const DEFAULT_BYD = [0,   12,  12,  38,  38,  68,  83,  99];
 
-  const TANK_CAP = 80;
+  // ── Active calibration (rebuilt from user inputs on Save) ──────────────────
+  // Table format for interpolation: [[reading, litres], ...]
+  // Sorted by reading ascending so interp works correctly
+  let KM_TABLE  = buildTable(DEFAULT_KM,  FIXED_LITRES);
+  let BYD_TABLE = buildTable(DEFAULT_BYD, FIXED_LITRES);
 
-  // Piecewise linear interpolation
+  // Tank capacity = extrapolate BYD table to 100% (true full reading)
+  function calcTankCap() { return interp(100, BYD_TABLE); }
+
+  // Build interpolation table from parallel arrays.
+  // Duplicate readings (same input value, different litres) are averaged
+  // to prevent step changes in the output.
+  function buildTable(readings, litres) {
+    const map = new Map();
+    readings.forEach((r, i) => {
+      if (!map.has(r)) map.set(r, []);
+      map.get(r).push(litres[i]);
+    });
+    const pairs = [];
+    map.forEach((ls, r) => {
+      const avg = ls.reduce((a, b) => a + b, 0) / ls.length;
+      pairs.push([r, avg]);
+    });
+    pairs.sort((a, b) => a[0] - b[0]);
+    return pairs;
+  }
+
+  // ── Interpolation ──────────────────────────────────────────────────────────
   function interp(val, table) {
-    if (val <= table[0][0]) return table[0][1];
-    if (val >= table[table.length - 1][0]) return table[table.length - 1][1];
+    // Extrapolate below first point
+    if (val <= table[0][0]) {
+      const [x0, y0] = table[0];
+      const [x1, y1] = table[1];
+      return x1 !== x0 ? y0 + (val - x0) / (x1 - x0) * (y1 - y0) : y0;
+    }
+    // Extrapolate above last point using last two distinct x values
+    if (val >= table[table.length - 1][0]) {
+      const [x1, y1] = table[table.length - 1];
+      let x0 = x1, y0 = y1;
+      for (let i = table.length - 2; i >= 0; i--) {
+        if (table[i][0] !== x1) { [x0, y0] = table[i]; break; }
+      }
+      const slope = x1 !== x0 ? (y1 - y0) / (x1 - x0) : 0;
+      return y1 + slope * (val - x1);
+    }
+    // Interpolate within table
     for (let i = 0; i < table.length - 1; i++) {
       const [x0, y0] = table[i];
       const [x1, y1] = table[i + 1];
@@ -473,19 +696,58 @@ if ('serviceWorker' in navigator) {
     return table[table.length - 1][1];
   }
 
-  function litresToPct(l) {
-    return Math.min(100, Math.max(0, (l / TANK_CAP) * 100));
+  function reverseInterp(litres, table) {
+    // Search by litres (y) value, return corresponding reading (x)
+    const sorted = [...table].sort((a, b) => a[1] - b[1]);
+    if (litres <= sorted[0][1]) return sorted[0][0];
+    if (litres >= sorted[sorted.length - 1][1]) return sorted[sorted.length - 1][0];
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const [x0, y0] = sorted[i];
+      const [x1, y1] = sorted[i + 1];
+      if (litres >= y0 && litres <= y1) {
+        const t = (litres - y0) / (y1 - y0);
+        return x0 + t * (x1 - x0);
+      }
+    }
+    return sorted[sorted.length - 1][0];
   }
 
-  function getColor(pct) {
-    if (pct <= 12) return '#ff4d4d';
-    if (pct <= 30) return '#ffb830';
-    return '#2dff8f';
+  // litresToPct now inlined in update() using dynamic tankCap
+
+  function getColor(litres) {
+    // Smooth colour transitions based on litres remaining
+    // Red: 0-10L, Red->Orange blend: 10-20L, Orange->Green blend: 20-30L, Green: 30L+
+    function lerp(a, b, t) { return Math.round(a + (b - a) * t); }
+    function rgb(r, g, b) { return 'rgb(' + r + ',' + g + ',' + b + ')'; }
+    const red    = [255, 77,  77];
+    const orange = [255, 184, 48];
+    const green  = [45,  255, 143];
+    if (litres <= 10) return rgb(...red);
+    if (litres <= 20) {
+      const t = (litres - 10) / 10;
+      return rgb(lerp(red[0],orange[0],t), lerp(red[1],orange[1],t), lerp(red[2],orange[2],t));
+    }
+    if (litres <= 30) {
+      const t = (litres - 20) / 10;
+      return rgb(lerp(orange[0],green[0],t), lerp(orange[1],green[1],t), lerp(orange[2],green[2],t));
+    }
+    return rgb(...green);
   }
 
+  // ── Load saved calibration ─────────────────────────────────────────────────
+  function loadSaved() {
+    try {
+      const savedKM  = localStorage.getItem('calKMreadings');
+      const savedBYD = localStorage.getItem('calBYDreadings');
+      if (savedKM)  KM_TABLE  = buildTable(JSON.parse(savedKM),  FIXED_LITRES);
+      if (savedBYD) BYD_TABLE = buildTable(JSON.parse(savedBYD), FIXED_LITRES);
+      // TANK_CAP is always derived dynamically
+    } catch(e) {}
+  }
+
+  // ── Tab management ─────────────────────────────────────────────────────────
   let activeTab = 'km';
 
-  // Restore last saved tab and value
   try {
     const savedTab = localStorage.getItem('fuelTab');
     const savedVal = localStorage.getItem('fuelVal');
@@ -494,9 +756,7 @@ if ('serviceWorker' in navigator) {
       document.getElementById('tab-' + t).classList.toggle('active', t === activeTab);
       document.getElementById('input-' + t).style.display = t === activeTab ? 'block' : 'none';
     });
-    if (savedVal) {
-      document.getElementById('val-' + activeTab).value = savedVal;
-    }
+    if (savedVal) document.getElementById('val-' + activeTab).value = savedVal;
   } catch(e) {}
 
   window.setTab = function (tab) {
@@ -508,29 +768,14 @@ if ('serviceWorker' in navigator) {
     update();
   };
 
-  // Reverse interpolation: given litres, find input value for a given table
-  function reverseInterp(litres, table) {
-    if (litres <= table[0][1]) return table[0][0];
-    if (litres >= table[table.length - 1][1]) return table[table.length - 1][0];
-    for (let i = 0; i < table.length - 1; i++) {
-      const [x0, y0] = table[i];
-      const [x1, y1] = table[i + 1];
-      if (litres >= y0 && litres <= y1) {
-        const t = (litres - y0) / (y1 - y0);
-        return x0 + t * (x1 - x0);
-      }
-    }
-    return table[table.length - 1][0];
-  }
-
-  // Update the inactive tab's input and slider to match current litres
+  // ── Sync sliders ───────────────────────────────────────────────────────────
   function syncOtherTab(litres) {
-    const otherTab = activeTab === 'byd' ? 'km' : 'byd';
-    const otherTable = otherTab === 'byd' ? BYD_TABLE : KM_TABLE;
-    const otherVal = Math.round(reverseInterp(litres, otherTable));
-    document.getElementById('val-' + otherTab).value = otherVal;
-    document.getElementById('slider-' + otherTab).value = otherVal;
-    document.getElementById('slval-' + otherTab).textContent = otherVal + (otherTab === 'km' ? ' km' : '%');
+    const other      = activeTab === 'byd' ? 'km' : 'byd';
+    const otherTable = other === 'byd' ? BYD_TABLE : KM_TABLE;
+    const otherVal   = Math.round(reverseInterp(litres, otherTable));
+    document.getElementById('val-' + other).value = otherVal;
+    document.getElementById('slider-' + other).value = otherVal;
+    document.getElementById('slval-' + other).textContent = otherVal + (other === 'km' ? ' km' : '%');
   }
 
   window.syncSlider = function (tab) {
@@ -542,62 +787,203 @@ if ('serviceWorker' in navigator) {
 
   function syncInput(tab) {
     const val = parseFloat(document.getElementById('val-' + tab).value) || 0;
-    document.getElementById('slider-' + tab).value = val;
+    document.getElementById('slider-' + tab).value = Math.min(val, tab === 'km' ? 700 : 100);
     document.getElementById('slval-' + tab).textContent = val + (tab === 'km' ? ' km' : '%');
   }
 
+  // ── Main update ────────────────────────────────────────────────────────────
   window.update = function () {
-    const el = document.getElementById('val-' + activeTab);
+    const el  = document.getElementById('val-' + activeTab);
     const raw = parseFloat(el.value);
     syncInput(activeTab);
 
     if (isNaN(raw) || el.value === '') {
       document.getElementById('litres').textContent = '—';
-      document.getElementById('to-fill').innerHTML = '— <span>L</span>';
+      document.getElementById('to-fill').innerHTML  = '— <span>L</span>';
       document.getElementById('gauge-bar').style.width = '0%';
       document.getElementById('alert-box').className = 'alert';
       return;
     }
 
-    const table = activeTab === 'byd' ? BYD_TABLE : KM_TABLE;
-    const litres = interp(raw, table);
-    const toFill = Math.max(0, TANK_CAP - litres);
-    const tankPct = litresToPct(litres);
-    const color = getColor(tankPct);
+    const table   = activeTab === 'byd' ? BYD_TABLE : KM_TABLE;
+    const litres  = interp(raw, table);
+    const tankCap = calcTankCap();
+    const toFill  = Math.max(0, tankCap - litres);
+    const tankPct = Math.min(100, Math.max(0, (litres / tankCap) * 100));
+    const color   = getColor(litres);
 
-    document.getElementById('litres').textContent = litres.toFixed(1);
-    document.getElementById('litres').style.color = color;
-    document.getElementById('to-fill').innerHTML = toFill.toFixed(1) + ' <span>L</span>';
+    document.getElementById('litres').textContent         = litres.toFixed(1);
+    document.getElementById('litres').style.color         = color;
+    document.getElementById('to-fill').innerHTML          = toFill.toFixed(1) + ' <span>L</span>';
+    document.getElementById('tank-cap-display').innerHTML = tankCap.toFixed(1) + ' <span>L</span>';
 
     const bar = document.getElementById('gauge-bar');
-    bar.style.width = tankPct + '%';
+    bar.style.width      = tankPct + '%';
     bar.style.background = color;
 
     const alert = document.getElementById('alert-box');
     alert.className = 'alert';
-    if (tankPct <= 12) {
-      alert.className = 'alert danger';
-      alert.textContent = '⚠ Very low! Only ' + litres.toFixed(1) + ' L remaining — fill up now.';
-    } else if (tankPct <= 30) {
-      alert.className = 'alert warn';
-      alert.textContent = 'Getting low — about ' + litres.toFixed(1) + ' L left. Consider filling up soon.';
+    if (litres <= 10) {
+      alert.className   = 'alert danger';
+      alert.textContent = '\u26a0 Very low! Only ' + litres.toFixed(1) + ' L remaining \u2014 fill up now.';
+    } else if (litres <= 20) {
+      alert.className   = 'alert warn';
+      alert.textContent = 'Getting low \u2014 about ' + litres.toFixed(1) + ' L left. Consider filling up soon.';
     }
 
-    // Keep the other tab in sync
     syncOtherTab(litres);
 
-    // Save last used tab and value to localStorage
     try {
       localStorage.setItem('fuelTab', activeTab);
       localStorage.setItem('fuelVal', raw);
     } catch(e) {}
   };
 
-  // Render restored value on load
+  // ── Settings panel ─────────────────────────────────────────────────────────
+  window.toggleSettings = function () {
+    const panel  = document.getElementById('settings-panel');
+    const btn    = document.getElementById('settings-btn');
+    const isOpen = panel.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    if (isOpen) {
+      renderTables();
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+  };
+
+  // Get current user readings from localStorage (or defaults)
+  function getCurrentKMreadings() {
+    try {
+      const s = localStorage.getItem('calKMreadings');
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return [...DEFAULT_KM];
+  }
+
+  function getCurrentBYDreadings() {
+    try {
+      const s = localStorage.getItem('calBYDreadings');
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return [...DEFAULT_BYD];
+  }
+
+  function renderTables() {
+    const kmReadings  = getCurrentKMreadings();
+    const bydReadings = getCurrentBYDreadings();
+    renderTable('km-tbody',  FIXED_LITRES, DEFAULT_KM,  kmReadings,  'km');
+    renderTable('byd-tbody', FIXED_LITRES, DEFAULT_BYD, bydReadings, 'byd');
+  }
+
+  function renderTable(tbodyId, litresArr, defaults, current, type) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    const unit = type === 'km' ? 'km' : '%';
+
+    litresArr.forEach((litres, i) => {
+      const defVal = defaults[i];
+      const curVal = current[i];
+      const isModified = curVal !== defVal;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="row-litres">${litres}L</span></td>
+        <td><span class="cal-default">${defVal}${unit}</span></td>
+        <td>
+          <input class="cal-input${isModified ? ' modified' : ''}"
+            type="number" min="0" max="${type === 'km' ? 1200 : 100}" step="1"
+            value="${curVal}"
+            data-type="${type}"
+            data-index="${i}"
+            data-default="${defVal}"
+            oninput="onCalInput(this)">
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.onCalInput = function (el) {
+    const val = parseFloat(el.value);
+    const def = parseFloat(el.dataset.default);
+    el.classList.toggle('modified', !isNaN(val) && val !== def);
+  };
+
+  // ── Save & apply ───────────────────────────────────────────────────────────
+  window.saveSettings = function () {
+    const kmReadings  = [];
+    const bydReadings = [];
+
+    document.querySelectorAll('#km-tbody .cal-input').forEach(el => {
+      kmReadings[parseInt(el.dataset.index)] = parseFloat(el.value) || 0;
+    });
+
+    document.querySelectorAll('#byd-tbody .cal-input').forEach(el => {
+      bydReadings[parseInt(el.dataset.index)] = parseFloat(el.value) || 0;
+    });
+
+    // Rebuild interpolation tables from new readings
+    KM_TABLE  = buildTable(kmReadings,  FIXED_LITRES);
+    BYD_TABLE = buildTable(bydReadings, FIXED_LITRES);
+    // TANK_CAP derived dynamically from BYD_TABLE via calcTankCap()
+
+    // Persist the raw readings (not the built table)
+    try {
+      localStorage.setItem('calKMreadings',  JSON.stringify(kmReadings));
+      localStorage.setItem('calBYDreadings', JSON.stringify(bydReadings));
+    } catch(e) {}
+
+    // Re-render to reflect saved state
+    renderTables();
+
+    // Apply immediately to main display
+    update();
+
+    const msg = document.getElementById('save-confirm');
+    msg.textContent = '\u2713 Calibration saved and applied';
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 3000);
+  };
+
+  // ── Reset to defaults ──────────────────────────────────────────────────────
+  window.resetToDefaults = function () {
+    try {
+      localStorage.removeItem('calKMreadings');
+      localStorage.removeItem('calBYDreadings');
+    } catch(e) {}
+
+    KM_TABLE  = buildTable(DEFAULT_KM,  FIXED_LITRES);
+    BYD_TABLE = buildTable(DEFAULT_BYD, FIXED_LITRES);
+    // TANK_CAP derived dynamically from BYD_TABLE via calcTankCap()
+
+    renderTables();
+    update();
+
+    const msg = document.getElementById('save-confirm');
+    msg.textContent = '\u21ba Reset to default calibration';
+    msg.classList.add('show');
+    setTimeout(() => {
+      msg.classList.remove('show');
+      msg.textContent = '\u2713 Calibration saved and applied';
+    }, 3000);
+  };
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadSaved();
   update();
 
 })();
 </script>
 
+<footer style="
+  text-align: center;
+  padding: 16px 20px calc(16px + var(--safe-bottom));
+  font-size: 11px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  line-height: 1.8;
+">
+  <span style="color: var(--accent);">BYD Fuel Calculator</span><br>
+  © 2026 Ryan Cramp — All Rights Reserved
+</footer>
 </body>
 </html>
