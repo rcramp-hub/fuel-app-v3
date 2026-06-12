@@ -159,6 +159,39 @@
     margin-top: 2px;
   }
 
+  /* Override input */
+  .hero-num {
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .hero-num:active { opacity: 0.7; }
+
+  .hero-override-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--accent);
+    outline: none;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 72px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    width: 100%;
+    -moz-appearance: textfield;
+    padding: 0;
+  }
+  .hero-override-input::-webkit-outer-spin-button,
+  .hero-override-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .override-badge {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--warn);
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
   .gauge-outer {
     background: var(--surface2);
     border-radius: 6px;
@@ -185,6 +218,11 @@
   .stat-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .stat-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
   }
 
@@ -474,6 +512,23 @@
   }
   .s-btn.primary:active { background: rgba(45,255,143,0.22); }
 
+
+  /* Burn rate card */
+  .burn-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .burn-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 62px;
+    text-align: right;
+  }
   .save-confirm {
     font-size: 12px;
     color: var(--accent);
@@ -509,8 +564,13 @@
 
   <div class="hero">
     <div class="hero-label">Fuel remaining</div>
-    <div class="hero-num" id="litres">—</div>
+    <div class="hero-num" id="litres" onclick="activateOverride()" title="Tap to override">—</div>
+    <input class="hero-override-input" id="override-input" type="number" min="0" max="200" step="0.1"
+      placeholder="0.0" style="display:none" onblur="commitOverride()" oninput="previewOverride()">
     <div class="hero-unit">litres</div>
+    <div class="override-badge" id="override-badge" style="display:none">
+      ✎ manual override — move slider to resume
+    </div>
     <div class="gauge-outer">
       <div class="gauge-inner" id="gauge-bar" style="width:0%"></div>
     </div>
@@ -528,6 +588,10 @@
       <div class="stat-label">Tank capacity seen by fuel sender</div>
       <div class="stat-val" id="tank-cap-display">— <span>L</span></div>
     </div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Distance remaining</div>
+    <div class="stat-val" id="distance-remaining">— <span>km</span></div>
   </div>
 
   <div class="card">
@@ -555,6 +619,16 @@
         <div class="slider-val" id="slval-byd">0%</div>
       </div>
       <div class="hint">Enter the fuel percentage shown in your BYD app or on the dashboard display.</div>
+    </div>
+
+    <!-- Burn rate -->
+    <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">
+      <div class="burn-label">Fuel burn rate (L/100km)</div>
+      <div class="slider-row">
+        <input type="range" id="slider-burn" min="5" max="30" step="0.1" value="10" oninput="syncBurnSlider()">
+        <div class="burn-val" id="burn-val">10.0 L/100km</div>
+      </div>
+      <div class="hint">Set your vehicle's average fuel consumption in L/100km to calculate distance remaining.</div>
     </div>
   </div>
 
@@ -749,15 +823,34 @@ if ('serviceWorker' in navigator) {
   let activeTab = 'km';
 
   try {
-    const savedTab = localStorage.getItem('fuelTab');
-    const savedVal = localStorage.getItem('fuelVal');
+    const savedTab  = localStorage.getItem('fuelTab');
+    const savedVal  = localStorage.getItem('fuelVal');
+    const savedBurn = localStorage.getItem('burnRate');
     if (savedTab) activeTab = savedTab;
     ['byd', 'km'].forEach(t => {
       document.getElementById('tab-' + t).classList.toggle('active', t === activeTab);
       document.getElementById('input-' + t).style.display = t === activeTab ? 'block' : 'none';
     });
-    if (savedVal) document.getElementById('val-' + activeTab).value = savedVal;
+    if (savedVal)  document.getElementById('val-' + activeTab).value = savedVal;
+    if (savedBurn) {
+      document.getElementById('slider-burn').value = savedBurn;
+      document.getElementById('burn-val').textContent = parseFloat(savedBurn).toFixed(1) + ' L/100km';
+    }
   } catch(e) {}
+
+  window.syncBurnSlider = function () {
+    const val = parseFloat(document.getElementById('slider-burn').value);
+    document.getElementById('burn-val').textContent = val.toFixed(1) + ' L/100km';
+    try { localStorage.setItem('burnRate', val); } catch(e) {}
+    // Recalculate distance from whatever litres are currently displayed
+    const litresText = document.getElementById('litres').textContent;
+    const litres = parseFloat(litresText);
+    if (!isNaN(litres)) {
+      const distance = (litres / val) * 100;
+      document.getElementById('distance-remaining').innerHTML = distance.toFixed(0) + ' <span>km</span>';
+    }
+    if (!overrideActive) update();
+  };
 
   window.setTab = function (tab) {
     activeTab = tab;
@@ -779,6 +872,7 @@ if ('serviceWorker' in navigator) {
   }
 
   window.syncSlider = function (tab) {
+    clearOverride();
     const val = document.getElementById('slider-' + tab).value;
     document.getElementById('val-' + tab).value = val;
     document.getElementById('slval-' + tab).textContent = val + (tab === 'km' ? ' km' : '%');
@@ -793,6 +887,7 @@ if ('serviceWorker' in navigator) {
 
   // ── Main update ────────────────────────────────────────────────────────────
   window.update = function () {
+    if (overrideActive) return; // let override handle display
     const el  = document.getElementById('val-' + activeTab);
     const raw = parseFloat(el.value);
     syncInput(activeTab);
@@ -832,6 +927,11 @@ if ('serviceWorker' in navigator) {
     }
 
     syncOtherTab(litres);
+
+    // Distance remaining
+    const burnRate = parseFloat(document.getElementById('slider-burn').value) || 10;
+    const distance = (litres / burnRate) * 100;
+    document.getElementById('distance-remaining').innerHTML = distance.toFixed(0) + ' <span>km</span>';
 
     try {
       localStorage.setItem('fuelTab', activeTab);
@@ -966,6 +1066,79 @@ if ('serviceWorker' in navigator) {
       msg.textContent = '\u2713 Calibration saved and applied';
     }, 3000);
   };
+
+  // ── Manual override ───────────────────────────────────────────────────────
+  let overrideActive = false;
+
+  window.activateOverride = function () {
+    overrideActive = true;
+    const litresEl = document.getElementById('litres');
+    const inputEl  = document.getElementById('override-input');
+    // Pre-fill with current value if available
+    const cur = litresEl.textContent;
+    inputEl.value = cur === '—' ? '' : parseFloat(cur).toFixed(1);
+    litresEl.style.display  = 'none';
+    inputEl.style.display   = 'block';
+    document.getElementById('override-badge').style.display = 'block';
+    inputEl.focus();
+    inputEl.select();
+  };
+
+  window.previewOverride = function () {
+    const val = parseFloat(document.getElementById('override-input').value);
+    if (isNaN(val)) return;
+    applyLitres(val);
+  };
+
+  window.commitOverride = function () {
+    const inputEl = document.getElementById('override-input');
+    const val = parseFloat(inputEl.value);
+    inputEl.style.display  = 'none';
+    document.getElementById('litres').style.display = 'block';
+    if (!isNaN(val)) {
+      applyLitres(val);
+    } else {
+      clearOverride();
+    }
+  };
+
+  function clearOverride() {
+    overrideActive = false;
+    document.getElementById('override-badge').style.display = 'none';
+    document.getElementById('override-input').style.display = 'none';
+    document.getElementById('litres').style.display = 'block';
+  }
+
+  // Apply a known litres value directly to the display (used by both override and update)
+  function applyLitres(litres) {
+    const tankCap = calcTankCap();
+    const toFill  = Math.max(0, tankCap - litres);
+    const tankPct = Math.min(100, Math.max(0, (litres / tankCap) * 100));
+    const color   = getColor(litres);
+
+    document.getElementById('litres').textContent         = litres.toFixed(1);
+    document.getElementById('litres').style.color         = color;
+    document.getElementById('to-fill').innerHTML          = toFill.toFixed(1) + ' <span>L</span>';
+    document.getElementById('tank-cap-display').innerHTML = tankCap.toFixed(1) + ' <span>L</span>';
+
+    const bar = document.getElementById('gauge-bar');
+    bar.style.width      = tankPct + '%';
+    bar.style.background = color;
+
+    const alert = document.getElementById('alert-box');
+    alert.className = 'alert';
+    if (litres <= 10) {
+      alert.className   = 'alert danger';
+      alert.textContent = '⚠ Very low! Only ' + litres.toFixed(1) + ' L remaining — fill up now.';
+    } else if (litres <= 20) {
+      alert.className   = 'alert warn';
+      alert.textContent = 'Getting low — about ' + litres.toFixed(1) + ' L left. Consider filling up soon.';
+    }
+
+    const burnRate = parseFloat(document.getElementById('slider-burn').value) || 10;
+    const distance = (litres / burnRate) * 100;
+    document.getElementById('distance-remaining').innerHTML = distance.toFixed(0) + ' <span>km</span>';
+  }
 
   // ── Init ───────────────────────────────────────────────────────────────────
   loadSaved();
