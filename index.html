@@ -626,8 +626,8 @@
     <div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--border);">
       <div class="burn-label">Fuel burn rate (L/100km)</div>
       <div class="slider-row">
-        <input type="range" id="slider-burn" min="5" max="30" step="0.1" value="10" oninput="syncBurnSlider()">
-        <div class="burn-val" id="burn-val">10.0 L/100km</div>
+        <input type="range" id="slider-burn" min="5" max="30" step="0.1" value="12" oninput="syncBurnSlider()">
+        <div class="burn-val" id="burn-val">12.0 L/100km</div>
       </div>
       <div class="hint">Set your vehicle's average fuel consumption in L/100km to calculate distance remaining.</div>
     </div>
@@ -930,7 +930,7 @@ if ('serviceWorker' in navigator) {
     syncOtherTab(litres);
 
     // Distance remaining
-    const burnRate = parseFloat(document.getElementById('slider-burn').value) || 10;
+    const burnRate = parseFloat(document.getElementById('slider-burn').value) || 12;
     const distance = (litres / burnRate) * 100;
     document.getElementById('distance-remaining').innerHTML = distance.toFixed(0) + ' <span>km</span>';
 
@@ -1136,7 +1136,7 @@ if ('serviceWorker' in navigator) {
       alert.textContent = 'Getting low — about ' + litres.toFixed(1) + ' L left. Consider filling up soon.';
     }
 
-    const burnRate = parseFloat(document.getElementById('slider-burn').value) || 10;
+    const burnRate = parseFloat(document.getElementById('slider-burn').value) || 12;
     const distance = (litres / burnRate) * 100;
     document.getElementById('distance-remaining').innerHTML = distance.toFixed(0) + ' <span>km</span>';
   }
@@ -1147,6 +1147,30 @@ if ('serviceWorker' in navigator) {
 
 })();
 </script>
+
+<style>
+  .share-btn {
+    -webkit-appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 40px);
+    margin: 0 20px 16px;
+    padding: 13px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-mid);
+    border-radius: 12px;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .share-btn:active { background: rgba(45,255,143,0.22); }
+  .share-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+</style>
 
 <footer style="
   text-align: center;
@@ -1159,5 +1183,39 @@ if ('serviceWorker' in navigator) {
   <span style="color: var(--accent);">BYD Fuel Calculator</span><br>
   © 2026 Ryan Cramp — All Rights Reserved
 </footer>
+<button class="share-btn" onclick="shareApp()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+    <polyline points="16 6 12 2 8 6"/>
+    <line x1="12" y1="2" x2="12" y2="15"/>
+  </svg>
+  Share this app
+</button>
+
+<script>
+  window.shareApp = async function () {
+    const shareData = {
+      title: 'BYD Fuel Calculator',
+      text: 'A calibrated fuel calculator for BYD vehicles — shows actual litres remaining based on your dashboard or app reading.',
+      url: window.location.href
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch(e) {
+        // User cancelled or error — do nothing
+      }
+    } else {
+      // Fallback for browsers without Web Share API — copy URL to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      } catch(e) {
+        alert('Share link: ' + window.location.href);
+      }
+    }
+  };
+</script>
+
 </body>
 </html>
