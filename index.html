@@ -461,14 +461,14 @@
     -webkit-appearance: none;
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
     color: var(--text);
     font-family: 'Space Mono', monospace;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
     text-align: center;
-    width: 72px;
-    padding: 7px 4px;
+    width: 82px;
+    padding: 10px 4px;
     outline: none;
     -moz-appearance: textfield;
   }
@@ -533,12 +533,36 @@
     font-size: 12px;
     color: var(--accent);
     text-align: center;
-    padding: 0 16px 14px;
+    padding: 0 16px 6px;
     min-height: 18px;
     opacity: 0;
     transition: opacity 0.3s;
   }
   .save-confirm.show { opacity: 1; }
+
+  .last-updated {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 0 16px 14px;
+    min-height: 16px;
+    letter-spacing: 0.03em;
+  }
+
+  .cal-input.error {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: rgba(255,77,77,0.08);
+  }
+
+  .validation-msg {
+    font-size: 11px;
+    color: var(--danger);
+    padding: 6px 16px 10px;
+    display: none;
+    line-height: 1.5;
+  }
+  .validation-msg.show { display: block; }
 </style>
 </head>
 <body>
@@ -689,11 +713,13 @@
 
   <!-- Actions -->
   <div class="settings-section">
+    <div class="validation-msg" id="validation-msg"></div>
     <div class="settings-actions">
       <button class="s-btn" onclick="resetToDefaults()">Reset to defaults</button>
       <button class="s-btn primary" onclick="saveSettings()">Save &amp; apply</button>
     </div>
     <div class="save-confirm" id="save-confirm">✓ Calibration saved and applied</div>
+    <div class="last-updated" id="last-updated"></div>
   </div>
 
 </div>
@@ -818,6 +844,39 @@ if ('serviceWorker' in navigator) {
       if (savedBYD) BYD_TABLE = buildTable(JSON.parse(savedBYD), FIXED_LITRES);
       // TANK_CAP is always derived dynamically
     } catch(e) {}
+  }
+
+  function showLastUpdated() {
+    try {
+      const ts = localStorage.getItem('calLastUpdated');
+      const el = document.getElementById('last-updated');
+      if (!el) return;
+      if (ts) {
+        const d = new Date(ts);
+        el.textContent = 'Calibration last saved: ' + d.toLocaleDateString('en-AU', {
+          day: 'numeric', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } else {
+        el.textContent = 'Using default calibration data';
+      }
+    } catch(e) {}
+  }
+
+  function validateReadings(readings, type) {
+    const errors = [];
+    for (let i = 1; i < readings.length; i++) {
+      const cur  = readings[i];
+      const prev = readings[i - 1];
+      if (cur !== null && prev !== null && cur < prev) {
+        const unit = type === 'km' ? 'km' : '%';
+        errors.push(
+          FIXED_LITRES[i] + 'L shows ' + cur + unit +
+          ' — lower than ' + FIXED_LITRES[i-1] + 'L (' + prev + unit + ')'
+        );
+      }
+    }
+    return errors;
   }
 
   // ── Tab management ─────────────────────────────────────────────────────────
@@ -948,6 +1007,7 @@ if ('serviceWorker' in navigator) {
     btn.classList.toggle('open', isOpen);
     if (isOpen) {
       renderTables();
+      showLastUpdated();
       setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
   };
@@ -1022,21 +1082,43 @@ if ('serviceWorker' in navigator) {
       bydReadings[parseInt(el.dataset.index)] = parseFloat(el.value) || 0;
     });
 
-    // Rebuild interpolation tables from new readings
+    // Validate before saving
+    const kmErrors  = validateReadings(kmReadings,  'km');
+    const bydErrors = validateReadings(bydReadings, 'byd');
+    const allErrors = [...kmErrors, ...bydErrors];
+    const valMsg    = document.getElementById('validation-msg');
+
+    // Clear previous error highlights
+    document.querySelectorAll('.cal-input').forEach(el => el.classList.remove('error'));
+
+    if (allErrors.length > 0) {
+      document.querySelectorAll('#km-tbody .cal-input').forEach((el, i) => {
+        if (i > 0 && kmReadings[i] < kmReadings[i - 1]) el.classList.add('error');
+      });
+      document.querySelectorAll('#byd-tbody .cal-input').forEach((el, i) => {
+        if (i > 0 && bydReadings[i] < bydReadings[i - 1]) el.classList.add('error');
+      });
+      valMsg.innerHTML = '\u26a0 Please fix these before saving:<br>' +
+        allErrors.map(e => '\u2022 ' + e).join('<br>');
+      valMsg.classList.add('show');
+      return;
+    }
+
+    valMsg.classList.remove('show');
+
+    // Rebuild interpolation tables
     KM_TABLE  = buildTable(kmReadings,  FIXED_LITRES);
     BYD_TABLE = buildTable(bydReadings, FIXED_LITRES);
-    // TANK_CAP derived dynamically from BYD_TABLE via calcTankCap()
 
-    // Persist the raw readings (not the built table)
+    // Persist raw readings and timestamp
     try {
       localStorage.setItem('calKMreadings',  JSON.stringify(kmReadings));
       localStorage.setItem('calBYDreadings', JSON.stringify(bydReadings));
+      localStorage.setItem('calLastUpdated', new Date().toISOString());
     } catch(e) {}
 
-    // Re-render to reflect saved state
     renderTables();
-
-    // Apply immediately to main display
+    showLastUpdated();
     update();
 
     const msg = document.getElementById('save-confirm');
@@ -1057,6 +1139,9 @@ if ('serviceWorker' in navigator) {
     // TANK_CAP derived dynamically from BYD_TABLE via calcTankCap()
 
     renderTables();
+    showLastUpdated();
+    document.getElementById('validation-msg').classList.remove('show');
+    document.querySelectorAll('.cal-input').forEach(el => el.classList.remove('error'));
     update();
 
     const msg = document.getElementById('save-confirm');
