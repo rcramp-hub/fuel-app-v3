@@ -557,11 +557,6 @@
 
 <main>
 
-  <div class="tabs">
-    <button class="tab active" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
-    <button class="tab" onclick="setTab('byd')" id="tab-byd">BYD App %</button>
-  </div>
-
   <div class="hero">
     <div class="hero-label">Fuel remaining</div>
     <div class="hero-num" id="litres" onclick="activateOverride()" title="Tap to override">—</div>
@@ -595,6 +590,12 @@
   </div>
 
   <div class="card">
+
+    <div class="tabs" style="margin-bottom:14px;">
+      <button class="tab active" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
+      <button class="tab" onclick="setTab('byd')" id="tab-byd">BYD App %</button>
+    </div>
+
     <div id="input-km">
       <div class="source-badge">Dashboard km range</div>
       <div class="num-input-wrap">
