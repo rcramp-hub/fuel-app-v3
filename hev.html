@@ -22,6 +22,9 @@
     --blue: #4d9fff;
     --blue-dim: rgba(77,159,255,0.12);
     --blue-mid: rgba(77,159,255,0.35);
+    --purple: #b57aff;
+    --purple-dim: rgba(181,122,255,0.12);
+    --purple-mid: rgba(181,122,255,0.35);
     --warn: #ffb830;
     --warn-dim: rgba(255,184,48,0.1);
     --warn-mid: rgba(255,184,48,0.3);
@@ -33,15 +36,10 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-  }
+  html, body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
 
   body {
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     min-height: 100dvh;
     padding-top: var(--safe-top);
     padding-bottom: var(--safe-bottom);
@@ -49,357 +47,234 @@
 
   header {
     padding: 20px 20px 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 10;
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
   }
 
   .back-btn {
     -webkit-appearance: none;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-mid);
-    border-radius: 8px;
-    color: var(--accent);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    padding: 6px 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    text-decoration: none;
-    white-space: nowrap;
+    background: var(--accent-dim); border: 1px solid var(--accent-mid);
+    border-radius: 8px; color: var(--accent);
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    padding: 6px 12px; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    text-decoration: none; white-space: nowrap;
   }
   .back-btn svg { width: 14px; height: 14px; }
 
   header h1 {
-    font-family: 'Space Mono', monospace;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    text-transform: uppercase;
-    flex: 1;
+    font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700;
+    letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase; flex: 1;
   }
 
   main {
-    flex: 1;
-    padding: 20px 20px 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    overflow-y: auto;
+    flex: 1; padding: 20px 20px 28px;
+    display: flex; flex-direction: column; gap: 14px; overflow-y: auto;
   }
 
-  /* Fuel level warning banner */
-  .fuel-warn {
-    background: var(--warn-dim);
-    border: 1px solid var(--warn-mid);
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: var(--warn);
-    line-height: 1.6;
-    display: none;
+  /* Warning banner */
+  .banner {
+    border-radius: 12px; padding: 12px 16px;
+    font-size: 13px; line-height: 1.6; display: none;
   }
-  .fuel-warn.show { display: block; }
+  .banner.show { display: block; }
+  .banner.warn  { background: var(--warn-dim);   border: 1px solid var(--warn-mid);   color: var(--warn); }
+  .banner.info  { background: var(--blue-dim);   border: 1px solid var(--blue-mid);   color: var(--blue); }
 
-  /* Current fuel pill */
+  /* Fuel pill */
   .fuel-pill {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
   }
+  .fuel-pill-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+  .fuel-pill-val { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .fuel-pill-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  .fuel-pill-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: var(--muted);
-  }
+  /* Action row */
+  .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .fuel-pill-val {
-    font-family: 'Space Mono', monospace;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--accent);
-  }
-
-  .fuel-pill-note {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  /* ODO input card */
+  /* Cards */
   .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px 18px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px 18px 16px;
+    display: flex; flex-direction: column; gap: 14px;
   }
+  .card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
 
-  .card-title {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
+  /* Input row */
+  .input-row { display: flex; gap: 10px; align-items: stretch; }
+
+  .input-wrap {
+    flex: 1; display: flex; align-items: center;
+    background: var(--surface2); border-radius: 12px;
+    border: 1px solid var(--border); overflow: hidden; transition: border-color 0.2s;
   }
+  .input-wrap:focus-within { border-color: var(--accent-mid); }
+  .input-wrap.purple:focus-within { border-color: var(--purple-mid); }
 
-  .odo-row {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
+  .num-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    text-align: center; font-family: 'Space Mono', monospace;
+    font-size: 26px; font-weight: 700; color: var(--text);
+    padding: 10px 4px; -moz-appearance: textfield; min-width: 0;
   }
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-  .odo-input-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: var(--surface2);
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    transition: border-color 0.2s;
+  .input-unit { padding-right: 14px; font-size: 13px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  /* Buttons */
+  .btn {
+    -webkit-appearance: none; padding: 0 18px;
+    border-radius: 12px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: background 0.2s; border: 1px solid;
   }
-  .odo-input-wrap:focus-within { border-color: var(--accent-mid); }
+  .btn.accent { background: var(--accent-dim); border-color: var(--accent-mid); color: var(--accent); }
+  .btn.accent:active { background: rgba(45,255,143,0.22); }
+  .btn.purple { background: var(--purple-dim); border-color: var(--purple-mid); color: var(--purple); }
+  .btn.purple:active { background: rgba(181,122,255,0.22); }
+  .btn.full { width: 100%; padding: 12px; text-align: center; }
 
-  .odo-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    text-align: center;
-    font-family: 'Space Mono', monospace;
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--text);
-    padding: 10px 4px;
-    -moz-appearance: textfield;
-    min-width: 0;
+  .prev-odo { font-size: 12px; color: var(--muted); text-align: center; }
+  .prev-odo span { color: var(--text); font-weight: 500; }
+
+  /* Refuel modal overlay */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 100; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
   }
-  .odo-input::-webkit-outer-spin-button,
-  .odo-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; }
 
-  .odo-unit {
-    padding-right: 14px;
-    font-size: 13px;
-    color: var(--muted);
-    font-family: 'Space Mono', monospace;
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 24px 20px 20px;
+    width: 100%; max-width: 420px;
+    display: flex; flex-direction: column; gap: 16px;
+    transform: translateY(20px); transition: transform 0.25s;
   }
+  .modal-overlay.show .modal { transform: translateY(0); }
 
-  .submit-btn {
-    -webkit-appearance: none;
-    padding: 0 20px;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent-mid);
-    border-radius: 12px;
-    color: var(--accent);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
+  .modal-title {
+    font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700;
+    color: var(--purple); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .modal-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .modal-body strong { color: var(--text); }
+
+  .modal-input-wrap {
+    display: flex; align-items: center;
+    background: var(--surface2); border-radius: 12px;
+    border: 1px solid var(--purple-mid); overflow: hidden;
+  }
+  .modal-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    text-align: center; font-family: 'Space Mono', monospace;
+    font-size: 28px; font-weight: 700; color: var(--text);
+    padding: 10px 4px; -moz-appearance: textfield;
+  }
+  .modal-input::-webkit-outer-spin-button,
+  .modal-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .modal-unit { padding-right: 14px; font-size: 13px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-btn {
+    -webkit-appearance: none; padding: 12px;
+    border-radius: 10px; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface2); color: var(--text);
     transition: background 0.2s;
   }
-  .submit-btn:active { background: rgba(45,255,143,0.22); }
-
-  .prev-odo {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: center;
-  }
-  .prev-odo span { color: var(--text); font-weight: 500; }
+  .modal-btn.primary { background: var(--purple-dim); border-color: var(--purple-mid); color: var(--purple); }
+  .modal-btn.primary:active { background: rgba(181,122,255,0.22); }
+  .modal-btn:active { background: var(--surface); }
 
   /* Latest trip hero */
   .trip-hero {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    display: none;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 20px;
+    position: relative; overflow: hidden; display: none;
   }
   .trip-hero.show { display: block; }
-
   .trip-hero::before {
-    content: '';
-    position: absolute;
-    bottom: -30px; right: -30px;
-    width: 140px; height: 140px;
-    background: var(--blue);
-    border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.07;
-    pointer-events: none;
+    content: ''; position: absolute; bottom: -30px; right: -30px;
+    width: 140px; height: 140px; background: var(--blue);
+    border-radius: 50%; filter: blur(60px); opacity: 0.07; pointer-events: none;
   }
 
-  .trip-hero-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-
-  .trip-hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .trip-hero-stat { }
-
-  .trip-hero-val {
-    font-family: 'Space Mono', monospace;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--blue);
-    line-height: 1;
-  }
-
+  .trip-hero-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 14px; }
+  .trip-hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .trip-hero-sublabel { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+  .trip-hero-val { font-family: 'Space Mono', monospace; font-size: 28px; font-weight: 700; color: var(--blue); line-height: 1; }
   .trip-hero-val.accent { color: var(--accent); }
-
-  .trip-hero-unit {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 3px;
-  }
-
-  .trip-hero-sublabel {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
+  .trip-hero-unit { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
   /* Divider */
   .divider {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
   }
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  /* History list */
-  .history-empty {
-    text-align: center;
-    font-size: 13px;
-    color: var(--muted);
-    padding: 24px 0;
-    display: none;
-  }
+  /* History */
+  .history-empty { text-align: center; font-size: 13px; color: var(--muted); padding: 24px 0; display: none; }
   .history-empty.show { display: block; }
-
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+  .history-list { display: flex; flex-direction: column; gap: 10px; }
 
   .history-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 16px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    position: relative;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
   }
+  .history-item.latest { border-color: var(--blue-mid); background: var(--blue-dim); }
+  .history-item.refuel { border-color: var(--purple-mid); background: var(--purple-dim); }
 
-  .history-item:first-child {
-    border-color: var(--blue-mid);
-    background: var(--blue-dim);
-  }
+  .history-item-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-  .h-stat-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--muted);
-    margin-bottom: 3px;
-  }
+  .h-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 3px; }
+  .h-stat-val { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; color: var(--text); }
 
-  .h-stat-val {
-    font-family: 'Space Mono', monospace;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
+  .refuel-row {
+    display: flex; align-items: center; gap: 10px;
   }
+  .refuel-icon {
+    width: 32px; height: 32px; background: var(--purple-dim);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .refuel-icon svg { width: 16px; height: 16px; }
+  .refuel-info { flex: 1; }
+  .refuel-title { font-size: 13px; font-weight: 500; color: var(--purple); }
+  .refuel-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
   .history-date {
-    font-size: 10px;
-    color: var(--muted);
-    grid-column: 1 / -1;
-    padding-top: 6px;
-    border-top: 1px solid var(--border);
-    margin-top: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    font-size: 10px; color: var(--muted);
+    padding-top: 8px; border-top: 1px solid var(--border); margin-top: 10px;
+    display: flex; justify-content: space-between; align-items: center;
   }
 
   .delete-btn {
-    -webkit-appearance: none;
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 11px;
-    padding: 2px 4px;
-    border-radius: 4px;
-    transition: color 0.2s;
+    -webkit-appearance: none; background: transparent; border: none;
+    color: var(--muted); cursor: pointer; font-size: 11px;
+    padding: 2px 4px; border-radius: 4px; transition: color 0.2s;
   }
   .delete-btn:active { color: var(--danger); }
 
-  /* Clear all button */
   .clear-btn {
-    -webkit-appearance: none;
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
+    -webkit-appearance: none; width: 100%; padding: 10px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 10px; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s;
   }
   .clear-btn:active { border-color: rgba(255,77,77,0.4); color: var(--danger); }
 
   footer {
-    text-align: center;
-    padding: 16px 20px calc(12px + var(--safe-bottom));
-    font-size: 11px;
-    color: var(--muted);
-    border-top: 1px solid var(--border);
-    line-height: 1.8;
+    text-align: center; padding: 16px 20px calc(12px + var(--safe-bottom));
+    font-size: 11px; color: var(--muted);
+    border-top: 1px solid var(--border); line-height: 1.8;
   }
   footer span { color: var(--accent); }
 </style>
@@ -418,57 +293,70 @@
 
 <main>
 
-  <!-- Fuel level not updated warning -->
-  <div class="fuel-warn" id="fuel-warn">
-    ⚠ The fuel level in the main app hasn't been updated since your last ODO entry. Update your fuel reading before submitting a new ODO for an accurate result.
+  <!-- Stale fuel warning -->
+  <div class="banner warn" id="stale-warn">
+    ⚠ Your fuel level hasn't changed since the last ODO entry. Update your fuel reading in the main app before submitting.
   </div>
 
-  <!-- Current fuel level pulled from main app -->
+  <!-- Auto-detected refuel info banner -->
+  <div class="banner info" id="refuel-detected-banner">
+    ⛽ Refuel detected — your fuel level is higher than your last entry. Please log the refuel before submitting your ODO.
+  </div>
+
+  <!-- Economy written back to main app confirmation -->
+  <div class="banner" id="economy-updated-banner" style="background:var(--accent-dim); border:1px solid var(--accent-mid); color:var(--accent);">
+    ✓ Fuel economy updated — the main app's burn rate and distance remaining have been recalculated.
+  </div>
+
+  <!-- Fuel pill -->
   <div class="fuel-pill">
     <div>
       <div class="fuel-pill-label">Current fuel level</div>
       <div class="fuel-pill-note" id="fuel-note">From main app calculation</div>
     </div>
-    <div>
-      <div class="fuel-pill-val" id="fuel-display">— L</div>
-    </div>
+    <div class="fuel-pill-val" id="fuel-display">— L</div>
   </div>
 
   <!-- ODO input -->
   <div class="card">
     <div class="card-title">HEV Odometer reading</div>
-    <div class="odo-row">
-      <div class="odo-input-wrap">
-        <input class="odo-input" type="number" id="odo-input" min="0" max="999999" step="1" placeholder="0">
-        <div class="odo-unit">km</div>
+    <div class="input-row">
+      <div class="input-wrap">
+        <input class="num-input" type="number" id="odo-input" min="0" max="999999" step="1" placeholder="0">
+        <div class="input-unit">km</div>
       </div>
-      <button class="submit-btn" onclick="submitODO()">Submit</button>
+      <button class="btn accent" onclick="submitODO()">Submit</button>
     </div>
     <div class="prev-odo" id="prev-odo-display" style="display:none">
       Previous reading: <span id="prev-odo-val">—</span> km
     </div>
   </div>
 
-  <!-- Latest trip result -->
+  <!-- Log refuel button -->
+  <button class="btn purple full" onclick="openRefuelModal(null)">
+    ⛽ Log a refuel
+  </button>
+
+  <!-- Latest trip -->
   <div class="trip-hero" id="trip-hero">
     <div class="trip-hero-label">Latest trip</div>
     <div class="trip-hero-grid">
-      <div class="trip-hero-stat">
+      <div>
         <div class="trip-hero-sublabel">Distance</div>
         <div class="trip-hero-val accent" id="latest-dist">—</div>
         <div class="trip-hero-unit">km in HEV mode</div>
       </div>
-      <div class="trip-hero-stat">
+      <div>
         <div class="trip-hero-sublabel">Fuel used</div>
         <div class="trip-hero-val accent" id="latest-fuel">—</div>
         <div class="trip-hero-unit">litres</div>
       </div>
-      <div class="trip-hero-stat">
+      <div>
         <div class="trip-hero-sublabel">Consumption</div>
         <div class="trip-hero-val" id="latest-economy">—</div>
         <div class="trip-hero-unit">L/100km</div>
       </div>
-      <div class="trip-hero-stat">
+      <div>
         <div class="trip-hero-sublabel">ODO range</div>
         <div class="trip-hero-val" id="latest-odo-range" style="font-size:16px; padding-top:4px;">—</div>
         <div class="trip-hero-unit">km</div>
@@ -478,18 +366,29 @@
 
   <!-- History -->
   <div class="divider">Trip history</div>
-
-  <div class="history-empty" id="history-empty">
-    No trips recorded yet. Submit two ODO readings to see your first trip.
-  </div>
-
+  <div class="history-empty" id="history-empty">No trips recorded yet. Submit two ODO readings to see your first trip.</div>
   <div class="history-list" id="history-list"></div>
-
-  <button class="clear-btn" id="clear-btn" onclick="clearAll()">
-    Clear all trip history
-  </button>
+  <button class="clear-btn" onclick="clearAll()">Clear all trip history</button>
 
 </main>
+
+<!-- Refuel modal -->
+<div class="modal-overlay" id="refuel-modal">
+  <div class="modal">
+    <div class="modal-title">⛽ Log Refuel</div>
+    <div class="modal-body" id="modal-body">
+      Enter how many litres you added to the tank.
+    </div>
+    <div class="modal-input-wrap">
+      <input class="modal-input" type="number" id="refuel-input" min="0.1" max="200" step="0.1" placeholder="0.0">
+      <div class="modal-unit">L</div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeRefuelModal()">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmRefuel()">Log refuel</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <span>BYD Fuel Calculator</span><br>
@@ -500,227 +399,336 @@
 (function () {
 
   // ── State ──────────────────────────────────────────────────────────────────
-  const STORE_ENTRIES  = 'hevEntries';   // array of {odo, fuel, ts}
-  const STORE_FUEL_TS  = 'fuelValTs';    // timestamp of last fuel update in main app
+  // Entry types: { type:'odo', odo, fuel, ts } or { type:'refuel', litres, ts }
+  let entries = [];
+  let pendingODO = null; // holds ODO value while waiting for refuel confirmation
 
-  let entries = [];  // [{odo, fuel, ts}, ...]
-
-  // ── Load ───────────────────────────────────────────────────────────────────
+  // ── Persist ────────────────────────────────────────────────────────────────
   function load() {
-    try {
-      const s = localStorage.getItem(STORE_ENTRIES);
-      if (s) entries = JSON.parse(s);
-    } catch(e) { entries = []; }
+    try { const s = localStorage.getItem('hevEntries'); if (s) entries = JSON.parse(s); } catch(e) { entries = []; }
   }
 
   function save() {
-    try { localStorage.setItem(STORE_ENTRIES, JSON.stringify(entries)); } catch(e) {}
+    try { localStorage.setItem('hevEntries', JSON.stringify(entries)); } catch(e) {}
   }
 
-  // ── Get current fuel from main app localStorage ────────────────────────────
+  // ── Get current fuel from main app ─────────────────────────────────────────
   function getCurrentFuel() {
     try {
       const val = localStorage.getItem('fuelVal');
       const tab = localStorage.getItem('fuelTab') || 'km';
       if (!val) return null;
 
-      // Re-run interpolation using saved calibration
-      const FIXED_LITRES = [10, 20, 30, 40, 50, 60, 70, 80];
-      const DEFAULT_KM   = [0, 106, 106, 276, 276, 475, 581, 699];
-      const DEFAULT_BYD  = [0,  12,  12,  38,  38,  68,  83,  99];
+      const FIXED = [10,20,30,40,50,60,70,80];
+      const DKM   = [0,106,106,276,276,475,581,699];
+      const DBYD  = [0,12,12,38,38,68,83,99];
 
-      function buildTable(readings, litres) {
-        const map = new Map();
-        readings.forEach((r, i) => {
-          if (!map.has(r)) map.set(r, []);
-          map.get(r).push(litres[i]);
-        });
-        const pairs = [];
-        map.forEach((ls, r) => pairs.push([r, ls.reduce((a,b)=>a+b,0)/ls.length]));
-        pairs.sort((a,b) => a[0]-b[0]);
-        return pairs;
+      function buildTable(r, l) {
+        const m = new Map();
+        r.forEach((v,i)=>{ if(!m.has(v)) m.set(v,[]); m.get(v).push(l[i]); });
+        const p=[];
+        m.forEach((ls,v)=>p.push([v,ls.reduce((a,b)=>a+b,0)/ls.length]));
+        return p.sort((a,b)=>a[0]-b[0]);
       }
 
-      function interp(v, table) {
-        if (v <= table[0][0]) {
-          const [x0,y0]=table[0],[x1,y1]=table[1];
-          return x1!==x0 ? y0+(v-x0)/(x1-x0)*(y1-y0) : y0;
-        }
-        if (v >= table[table.length-1][0]) {
-          const [x1,y1]=table[table.length-1];
-          let x0=x1,y0=y1;
-          for(let i=table.length-2;i>=0;i--){if(table[i][0]!==x1){[x0,y0]=table[i];break;}}
-          return y1+((y1-y0)/(x1-x0))*(v-x1);
-        }
-        for(let i=0;i<table.length-1;i++){
-          const [x0,y0]=table[i],[x1,y1]=table[i+1];
-          if(v>=x0&&v<=x1) return y0+(v-x0)/(x1-x0)*(y1-y0);
-        }
-        return table[table.length-1][1];
+      function interp(v, t) {
+        if(v<=t[0][0]){const[x0,y0]=t[0],[x1,y1]=t[1];return x1!==x0?y0+(v-x0)/(x1-x0)*(y1-y0):y0;}
+        if(v>=t[t.length-1][0]){const[x1,y1]=t[t.length-1];let x0=x1,y0=y1;for(let i=t.length-2;i>=0;i--){if(t[i][0]!==x1){[x0,y0]=t[i];break;}}return y1+((y1-y0)/(x1-x0))*(v-x1);}
+        for(let i=0;i<t.length-1;i++){const[x0,y0]=t[i],[x1,y1]=t[i+1];if(v>=x0&&v<=x1)return y0+(v-x0)/(x1-x0)*(y1-y0);}
+        return t[t.length-1][1];
       }
 
-      const savedKM  = localStorage.getItem('calKMreadings');
-      const savedBYD = localStorage.getItem('calBYDreadings');
-      const kmTable  = buildTable(savedKM  ? JSON.parse(savedKM)  : DEFAULT_KM,  FIXED_LITRES);
-      const bydTable = buildTable(savedBYD ? JSON.parse(savedBYD) : DEFAULT_BYD, FIXED_LITRES);
-
-      const raw = parseFloat(val);
-      return tab === 'byd' ? interp(raw, bydTable) : interp(raw, kmTable);
+      const skm  = localStorage.getItem('calKMreadings');
+      const sbyd = localStorage.getItem('calBYDreadings');
+      const kt   = buildTable(skm  ? JSON.parse(skm)  : DKM,  FIXED);
+      const bt   = buildTable(sbyd ? JSON.parse(sbyd) : DBYD, FIXED);
+      return tab==='byd' ? interp(parseFloat(val), bt) : interp(parseFloat(val), kt);
     } catch(e) { return null; }
   }
 
-  // ── Check if fuel has been updated since last ODO entry ────────────────────
+  // ── Last ODO entry ─────────────────────────────────────────────────────────
+  function lastODOEntry() {
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].type === 'odo') return entries[i];
+    }
+    return null;
+  }
+
+  // ── Refuel litres added since last ODO ────────────────────────────────────
+  function refuelSinceLastODO() {
+    let total = 0;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].type === 'odo') break;
+      if (entries[i].type === 'refuel') total += entries[i].litres;
+    }
+    return total;
+  }
+
+  // ── Stale check ────────────────────────────────────────────────────────────
   function fuelIsStale() {
-    if (entries.length === 0) return false;
-    try {
-      const lastEntry  = entries[entries.length - 1];
-      const fuelTab    = localStorage.getItem('fuelTab');
-      const fuelVal    = localStorage.getItem('fuelVal');
-      // Compare stored fuel value at last entry to current
-      return Math.abs(lastEntry.fuel - getCurrentFuel()) < 0.1;
-    } catch(e) { return false; }
+    const last = lastODOEntry();
+    if (!last) return false;
+    const cur = getCurrentFuel();
+    if (cur === null) return false;
+    return Math.abs(last.fuel - cur) < 0.1;
+  }
+
+  // ── Refuel detected (fuel went up) ────────────────────────────────────────
+  function refuelDetected() {
+    const last = lastODOEntry();
+    if (!last) return false;
+    const cur = getCurrentFuel();
+    if (cur === null) return false;
+    // Account for refuels already logged — net fuel should still be higher
+    return cur > last.fuel;
   }
 
   // ── Render fuel pill ───────────────────────────────────────────────────────
   function renderFuelPill() {
     const fuel = getCurrentFuel();
-    const el   = document.getElementById('fuel-display');
-    const note = document.getElementById('fuel-note');
-    if (fuel !== null) {
-      el.textContent   = fuel.toFixed(1) + ' L';
-      note.textContent = 'From main app — update there first if needed';
-    } else {
-      el.textContent   = '— L';
-      note.textContent = 'No fuel reading found — go to main app first';
-    }
+    document.getElementById('fuel-display').textContent = fuel !== null ? fuel.toFixed(1)+' L' : '— L';
+    document.getElementById('fuel-note').textContent    = fuel !== null
+      ? 'From main app — update there first if needed'
+      : 'No fuel reading found — go to main app first';
   }
 
-  // ── Render previous ODO ────────────────────────────────────────────────────
+  // ── Render prev ODO ────────────────────────────────────────────────────────
   function renderPrevODO() {
-    const prevEl = document.getElementById('prev-odo-display');
-    const valEl  = document.getElementById('prev-odo-val');
-    if (entries.length > 0) {
-      const last = entries[entries.length - 1];
-      prevEl.style.display = 'block';
-      valEl.textContent    = last.odo.toLocaleString();
+    const last = lastODOEntry();
+    const el   = document.getElementById('prev-odo-display');
+    if (last) {
+      el.style.display = 'block';
+      document.getElementById('prev-odo-val').textContent = last.odo.toLocaleString();
     } else {
-      prevEl.style.display = 'none';
+      el.style.display = 'none';
     }
   }
 
   // ── Submit ODO ─────────────────────────────────────────────────────────────
-  window.submitODO = function () {
+  window.submitODO = function() {
     const input = document.getElementById('odo-input');
     const odo   = parseFloat(input.value);
 
+    // Validate number
     if (isNaN(odo) || odo <= 0) {
-      input.style.borderColor = 'var(--danger)';
-      setTimeout(() => input.style.borderColor = '', 1500);
+      input.style.outline = '2px solid var(--danger)';
+      setTimeout(() => input.style.outline = '', 1500);
       return;
     }
 
-    // Check ODO is greater than previous
-    if (entries.length > 0 && odo <= entries[entries.length - 1].odo) {
-      alert('New ODO reading must be greater than the previous reading (' + entries[entries.length-1].odo.toLocaleString() + ' km).');
+    // Validate greater than previous
+    const last = lastODOEntry();
+    if (last && odo <= last.odo) {
+      alert('New ODO must be greater than the previous reading (' + last.odo.toLocaleString() + ' km).');
       return;
     }
 
+    // No fuel reading available
     const fuel = getCurrentFuel();
     if (fuel === null) {
       alert('No fuel reading found. Please update your fuel level in the main app first.');
       return;
     }
 
-    // Block submission if fuel level unchanged since last entry
-    if (fuelIsStale()) {
-      document.getElementById('fuel-warn').classList.add('show');
-      return; // stop — do not register entry until fuel is updated
+    // Auto-detect refuel — fuel went up since last ODO
+    if (refuelDetected()) {
+      document.getElementById('refuel-detected-banner').classList.add('show');
+      document.getElementById('stale-warn').classList.remove('show');
+      // Store the ODO and open refuel modal to collect litres added
+      pendingODO = odo;
+      openRefuelModal('auto');
+      return;
     }
 
-    document.getElementById('fuel-warn').classList.remove('show');
+    // Stale fuel check
+    if (fuelIsStale()) {
+      document.getElementById('stale-warn').classList.add('show');
+      document.getElementById('refuel-detected-banner').classList.remove('show');
+      return;
+    }
 
-    // Store entry
-    entries.push({ odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() });
+    document.getElementById('stale-warn').classList.remove('show');
+    document.getElementById('refuel-detected-banner').classList.remove('show');
+
+    commitODO(odo, fuel);
+  };
+
+  function commitODO(odo, fuel) {
+    entries.push({ type: 'odo', odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() });
     save();
+    document.getElementById('odo-input').value = '';
 
-    // Clear input
-    input.value = '';
+    // If we now have at least two ODO entries, calculate economy and
+    // write it back to localStorage so the main app's burn rate updates
+    const odoEntries = entries.map((e,i)=>({...e,i})).filter(e=>e.type==='odo');
+    if (odoEntries.length >= 2) {
+      const prev = odoEntries[odoEntries.length-2];
+      const curr = odoEntries[odoEntries.length-1];
+      const trip = calcTrip(prev.i, curr.i);
+      if (trip.economy !== null && trip.economy > 0) {
+        try {
+          localStorage.setItem('burnRate', trip.economy.toFixed(1));
+          // Show confirmation banner briefly
+          const eb = document.getElementById('economy-updated-banner');
+          eb.classList.add('show');
+          setTimeout(() => eb.classList.remove('show'), 4000);
+        } catch(e) {}
+      }
+    }
 
     renderAll();
+  }
+
+  // ── Refuel modal ───────────────────────────────────────────────────────────
+  window.openRefuelModal = function(mode) {
+    const body = document.getElementById('modal-body');
+    if (mode === 'auto') {
+      const last = lastODOEntry();
+      body.innerHTML = 'Your fuel level is <strong>higher</strong> than your last entry — it looks like you\'ve refuelled. Enter how many litres you added so the economy calculation stays accurate.';
+    } else {
+      body.innerHTML = 'Enter how many litres you added to the tank at this refuel stop.';
+    }
+    document.getElementById('refuel-input').value = '';
+    document.getElementById('refuel-modal').classList.add('show');
+    setTimeout(() => document.getElementById('refuel-input').focus(), 300);
   };
+
+  window.closeRefuelModal = function() {
+    document.getElementById('refuel-modal').classList.remove('show');
+    pendingODO = null;
+  };
+
+  window.confirmRefuel = function() {
+    const litres = parseFloat(document.getElementById('refuel-input').value);
+    if (isNaN(litres) || litres <= 0) {
+      document.getElementById('refuel-input').style.outline = '2px solid var(--danger)';
+      setTimeout(() => document.getElementById('refuel-input').style.outline = '', 1500);
+      return;
+    }
+
+    // Log the refuel event
+    entries.push({ type: 'refuel', litres: parseFloat(litres.toFixed(2)), ts: new Date().toISOString() });
+    save();
+
+    document.getElementById('refuel-modal').classList.remove('show');
+    document.getElementById('refuel-detected-banner').classList.remove('show');
+
+    // If we had a pending ODO from auto-detect, commit it now
+    if (pendingODO !== null) {
+      const fuel = getCurrentFuel();
+      commitODO(pendingODO, fuel);
+      pendingODO = null;
+    } else {
+      renderAll();
+    }
+  };
+
+  // ── Calculate trip economy between two ODO entries ─────────────────────────
+  // Sums any refuel events that fall between them
+  function calcTrip(fromIndex, toIndex) {
+    const from = entries[fromIndex];
+    const to   = entries[toIndex];
+    let refuelTotal = 0;
+    for (let i = fromIndex + 1; i < toIndex; i++) {
+      if (entries[i].type === 'refuel') refuelTotal += entries[i].litres;
+    }
+    const dist      = to.odo - from.odo;
+    const fuelUsed  = from.fuel - to.fuel + refuelTotal;
+    const economy   = dist > 0 && fuelUsed > 0 ? (fuelUsed / dist) * 100 : null;
+    return { dist, fuelUsed, economy, refuelTotal };
+  }
 
   // ── Render latest trip ─────────────────────────────────────────────────────
   function renderLatestTrip() {
     const hero = document.getElementById('trip-hero');
-    if (entries.length < 2) { hero.classList.remove('show'); return; }
+    // Find last two ODO entries
+    const odoEntries = entries.map((e,i)=>({...e,i})).filter(e=>e.type==='odo');
+    if (odoEntries.length < 2) { hero.classList.remove('show'); return; }
 
-    const curr = entries[entries.length - 1];
-    const prev = entries[entries.length - 2];
-    const dist = curr.odo - prev.odo;
-    const fuel = prev.fuel - curr.fuel;  // fuel at start minus fuel at end
-    const econ = dist > 0 && fuel > 0 ? (fuel / dist) * 100 : null;
+    const prev = odoEntries[odoEntries.length-2];
+    const curr = odoEntries[odoEntries.length-1];
+    const trip = calcTrip(prev.i, curr.i);
 
-    document.getElementById('latest-dist').textContent    = dist.toFixed(0);
-    document.getElementById('latest-fuel').textContent    = fuel > 0 ? fuel.toFixed(1) : '—';
-    document.getElementById('latest-economy').textContent = econ !== null ? econ.toFixed(1) : '—';
-    document.getElementById('latest-odo-range').textContent =
-      prev.odo.toLocaleString() + ' → ' + curr.odo.toLocaleString();
-
+    document.getElementById('latest-dist').textContent    = trip.dist.toFixed(0);
+    document.getElementById('latest-fuel').textContent    = trip.fuelUsed > 0 ? trip.fuelUsed.toFixed(1) : '—';
+    document.getElementById('latest-economy').textContent = trip.economy !== null ? trip.economy.toFixed(1) : '—';
+    document.getElementById('latest-odo-range').textContent = prev.odo.toLocaleString()+' → '+curr.odo.toLocaleString();
     hero.classList.add('show');
   }
 
-  // ── Render history list ────────────────────────────────────────────────────
+  // ── Render history ─────────────────────────────────────────────────────────
   function renderHistory() {
-    const list    = document.getElementById('history-list');
-    const empty   = document.getElementById('history-empty');
-    const clearBtn = document.getElementById('clear-btn');
+    const list  = document.getElementById('history-list');
+    const empty = document.getElementById('history-empty');
 
-    // Need at least 2 entries to form a trip
-    const trips = [];
-    for (let i = entries.length - 1; i >= 1; i--) {
-      const curr = entries[i];
-      const prev = entries[i - 1];
-      const dist = curr.odo - prev.odo;
-      const fuel = prev.fuel - curr.fuel;
-      const econ = dist > 0 && fuel > 0 ? (fuel / dist) * 100 : null;
-      trips.push({ curr, prev, dist, fuel, econ, index: i });
+    // Build display items — trips between ODO pairs, plus standalone refuel events
+    const items = [];
+    const odoIndices = [];
+    entries.forEach((e,i) => { if (e.type==='odo') odoIndices.push(i); });
+
+    // Build trips
+    for (let t = odoIndices.length-1; t >= 1; t--) {
+      const fromI = odoIndices[t-1];
+      const toI   = odoIndices[t];
+      const trip  = calcTrip(fromI, toI);
+      items.push({ kind:'trip', entry: entries[toI], prev: entries[fromI], trip, index: toI, isLatest: t===odoIndices.length-1 });
     }
 
-    if (trips.length === 0) {
-      empty.classList.add('show');
-      list.innerHTML = '';
-      return;
-    }
+    // Also show refuels that came before first ODO or are interspersed (not already shown in trip context)
+    // We mark refuels that are between two ODO entries as "included" — show separately only if before first ODO
+    const firstODO = odoIndices[0] ?? Infinity;
+    entries.forEach((e,i) => {
+      if (e.type==='refuel' && i < firstODO) {
+        items.push({ kind:'refuel', entry: e, index: i });
+      }
+    });
 
+    if (items.length === 0) { empty.classList.add('show'); list.innerHTML=''; return; }
     empty.classList.remove('show');
 
-    list.innerHTML = trips.map((t, ti) => {
-      const d    = new Date(t.curr.ts);
-      const date = d.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-      const isLatest = ti === 0;
-      return `
-        <div class="history-item">
-          <div>
-            <div class="h-stat-label">Distance</div>
-            <div class="h-stat-val">${t.dist.toFixed(0)} km</div>
-          </div>
-          <div>
-            <div class="h-stat-label">Fuel used</div>
-            <div class="h-stat-val">${t.fuel > 0 ? t.fuel.toFixed(1) + ' L' : '—'}</div>
-          </div>
-          <div>
-            <div class="h-stat-label">L/100km</div>
-            <div class="h-stat-val">${t.econ !== null ? t.econ.toFixed(1) : '—'}</div>
-          </div>
-          <div class="history-date">
-            <span>${date}${isLatest ? ' · Latest' : ''}</span>
-            <button class="delete-btn" onclick="deleteEntry(${t.index})">✕ Remove</button>
-          </div>
-        </div>`;
+    list.innerHTML = items.map(item => {
+      if (item.kind === 'trip') {
+        const d    = new Date(item.entry.ts);
+        const date = d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        const refuelNote = item.trip.refuelTotal > 0 ? ` <span style="color:var(--purple);font-size:10px;">incl. ${item.trip.refuelTotal.toFixed(1)}L refuel</span>` : '';
+        return `
+          <div class="history-item ${item.isLatest?'latest':''}">
+            <div class="history-item-grid">
+              <div><div class="h-stat-label">Distance</div><div class="h-stat-val">${item.trip.dist.toFixed(0)} km</div></div>
+              <div><div class="h-stat-label">Fuel used</div><div class="h-stat-val">${item.trip.fuelUsed>0?item.trip.fuelUsed.toFixed(1)+' L':'—'}</div></div>
+              <div><div class="h-stat-label">L/100km</div><div class="h-stat-val">${item.trip.economy!==null?item.trip.economy.toFixed(1):'—'}</div></div>
+            </div>
+            <div class="history-date">
+              <span>${date}${item.isLatest?' · Latest':''}${refuelNote}</span>
+              <button class="delete-btn" onclick="deleteEntry(${item.index})">✕ Remove</button>
+            </div>
+          </div>`;
+      }
+      if (item.kind === 'refuel') {
+        const d    = new Date(item.entry.ts);
+        const date = d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        return `
+          <div class="history-item refuel">
+            <div class="refuel-row">
+              <div class="refuel-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 22V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 22h10"/>
+                  <path d="M13 10h1.5a2 2 0 0 1 2 2v2a1 1 0 0 0 1 1h0a1 1 0 0 0 1-1V9l-3-3"/>
+                </svg>
+              </div>
+              <div class="refuel-info">
+                <div class="refuel-title">Refuel — ${item.entry.litres.toFixed(1)} L added</div>
+                <div class="refuel-detail">${date}</div>
+              </div>
+              <button class="delete-btn" onclick="deleteEntry(${item.index})">✕</button>
+            </div>
+          </div>`;
+      }
+      return '';
     }).join('');
   }
 
-  // ── Delete single entry ────────────────────────────────────────────────────
+  // ── Delete entry ───────────────────────────────────────────────────────────
   window.deleteEntry = function(index) {
     entries.splice(index, 1);
     save();
@@ -729,22 +737,25 @@
 
   // ── Clear all ──────────────────────────────────────────────────────────────
   window.clearAll = function() {
-    const count = entries.length;
-    const trips = Math.max(0, count - 1);
+    const odoCount    = entries.filter(e=>e.type==='odo').length;
+    const refuelCount = entries.filter(e=>e.type==='refuel').length;
+    const tripCount   = Math.max(0, odoCount-1);
     const msg = [
       'Are you sure you want to clear all HEV tracker data?',
       '',
       'This will permanently delete:',
-      '  • ' + count + ' odometer entr' + (count === 1 ? 'y' : 'ies'),
-      '  • ' + trips + ' recorded trip' + (trips === 1 ? '' : 's'),
-      '  • All fuel consumption history',
+      '  \u2022 '+odoCount+' odometer entr'+(odoCount===1?'y':'ies'),
+      '  \u2022 '+tripCount+' recorded trip'+(tripCount===1?'':'s'),
+      '  \u2022 '+refuelCount+' refuel event'+(refuelCount===1?'':'s'),
+      '  \u2022 All fuel consumption history',
       '',
       'This cannot be undone.'
     ].join('\n');
     if (!confirm(msg)) return;
     entries = [];
     save();
-    document.getElementById('fuel-warn').classList.remove('show');
+    document.getElementById('stale-warn').classList.remove('show');
+    document.getElementById('refuel-detected-banner').classList.remove('show');
     renderAll();
   };
 
