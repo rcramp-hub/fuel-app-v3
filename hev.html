@@ -406,7 +406,8 @@
   // ── State ──────────────────────────────────────────────────────────────────
   // Entry types: { type:'odo', odo, fuel, ts } or { type:'refuel', litres, ts }
   let entries = [];
-  let pendingODO = null; // holds ODO value while waiting for refuel confirmation
+  let pendingODO  = null; // holds ODO value while waiting for refuel confirmation
+  let pendingFuel = null; // holds fuel snapshot at time of ODO submission
 
   // ── Persist ────────────────────────────────────────────────────────────────
   function load() {
@@ -546,8 +547,9 @@
     if (refuelDetected()) {
       document.getElementById('refuel-detected-banner').classList.add('show');
       document.getElementById('stale-warn').classList.remove('show');
-      // Store the ODO and open refuel modal to collect litres added
-      pendingODO = odo;
+      // Snapshot fuel and ODO at submit time — used by confirmRefuel
+      pendingODO  = odo;
+      pendingFuel = fuel; // capture now, not later when modal confirms
       openRefuelModal('auto');
       return;
     }
@@ -627,9 +629,10 @@
 
     // If we had a pending ODO from auto-detect, commit it now
     if (pendingODO !== null) {
-      const fuel = getCurrentFuel();
-      commitODO(pendingODO, fuel);
-      pendingODO = null;
+      // Use the fuel snapshot captured at submit time — not current value
+      commitODO(pendingODO, pendingFuel !== null ? pendingFuel : getCurrentFuel());
+      pendingODO  = null;
+      pendingFuel = null;
     } else {
       renderAll();
     }
