@@ -232,7 +232,7 @@
   .history-item.latest { border-color: var(--blue-mid); background: var(--blue-dim); }
   .history-item.refuel { border-color: var(--purple-mid); background: var(--purple-dim); }
 
-  .history-item-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .history-item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   .h-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 3px; }
   .h-stat-val { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; color: var(--text); }
@@ -360,6 +360,11 @@
         <div class="trip-hero-sublabel">ODO range</div>
         <div class="trip-hero-val" id="latest-odo-range" style="font-size:16px; padding-top:4px;">—</div>
         <div class="trip-hero-unit">km</div>
+      </div>
+      <div>
+        <div class="trip-hero-sublabel">Refuel added</div>
+        <div class="trip-hero-val" id="latest-refuel" style="color:var(--purple)">—</div>
+        <div class="trip-hero-unit">litres</div>
       </div>
     </div>
   </div>
@@ -660,6 +665,7 @@
     document.getElementById('latest-fuel').textContent    = trip.fuelUsed > 0 ? trip.fuelUsed.toFixed(1) : '—';
     document.getElementById('latest-economy').textContent = trip.economy !== null ? trip.economy.toFixed(1) : '—';
     document.getElementById('latest-odo-range').textContent = prev.odo.toLocaleString()+' → '+curr.odo.toLocaleString();
+    document.getElementById('latest-refuel').textContent  = trip.refuelTotal > 0 ? trip.refuelTotal.toFixed(1) : '—';
     hero.classList.add('show');
   }
 
@@ -704,9 +710,10 @@
               <div><div class="h-stat-label">Distance</div><div class="h-stat-val">${item.trip.dist.toFixed(0)} km</div></div>
               <div><div class="h-stat-label">Fuel used</div><div class="h-stat-val">${item.trip.fuelUsed>0?item.trip.fuelUsed.toFixed(1)+' L':'—'}</div></div>
               <div><div class="h-stat-label">L/100km</div><div class="h-stat-val">${item.trip.economy!==null?item.trip.economy.toFixed(1):'—'}</div></div>
+              <div><div class="h-stat-label">Refuel added</div><div class="h-stat-val" style="${item.trip.refuelTotal>0?'color:var(--purple)':''}">${item.trip.refuelTotal>0?item.trip.refuelTotal.toFixed(1)+' L':'—'}</div></div>
             </div>
             <div class="history-date">
-              <span>${date}${item.isLatest?' · Latest':''}${refuelNote}</span>
+              <span>${date}${item.isLatest?' · Latest':''}</span>
               <button class="delete-btn" onclick="deleteEntry(${item.index})">✕ Remove</button>
             </div>
           </div>`;
