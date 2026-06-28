@@ -465,22 +465,29 @@
   }
 
   // ── Stale check ────────────────────────────────────────────────────────────
+  // Fuel is stale if net consumption (accounting for logged refuels) is near zero
   function fuelIsStale() {
     const last = lastODOEntry();
     if (!last) return false;
     const cur = getCurrentFuel();
     if (cur === null) return false;
-    return Math.abs(last.fuel - cur) < 0.1;
+    const alreadyLogged = refuelSinceLastODO();
+    const net = last.fuel - cur + alreadyLogged;
+    return Math.abs(net) < 0.1; // no meaningful change in fuel
   }
 
-  // ── Refuel detected (fuel went up) ────────────────────────────────────────
+  // ── Refuel detected (unaccounted fuel increase) ──────────────────────────
+  // Returns true only if fuel is higher than can be explained by already-logged refuels
   function refuelDetected() {
     const last = lastODOEntry();
     if (!last) return false;
     const cur = getCurrentFuel();
     if (cur === null) return false;
-    // Account for refuels already logged — net fuel should still be higher
-    return cur > last.fuel;
+    const alreadyLogged = refuelSinceLastODO();
+    // net = fuel at last ODO - current fuel + logged refuels
+    // if negative, there's unaccounted fuel (another refuel not yet logged)
+    const net = last.fuel - cur + alreadyLogged;
+    return net < -0.5; // small tolerance for floating point
   }
 
   // ── Render fuel pill ───────────────────────────────────────────────────────
