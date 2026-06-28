@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#0f1117"/>
+<title>HEV Tracker — BYD Fuel Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c26;
+    --surface2: #1e2330;
+    --accent: #2dff8f;
+    --accent-dim: rgba(45,255,143,0.12);
+    --accent-mid: rgba(45,255,143,0.35);
+    --blue: #4d9fff;
+    --blue-dim: rgba(77,159,255,0.12);
+    --blue-mid: rgba(77,159,255,0.35);
+    --warn: #ffb830;
+    --warn-dim: rgba(255,184,48,0.1);
+    --warn-mid: rgba(255,184,48,0.3);
+    --danger: #ff4d4d;
+    --text: #f0f2f8;
+    --muted: #7a8099;
+    --border: rgba(255,255,255,0.07);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+
+  header {
+    padding: 20px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+
+  .back-btn {
+    -webkit-appearance: none;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-mid);
+    border-radius: 8px;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .back-btn svg { width: 14px; height: 14px; }
+
+  header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+    flex: 1;
+  }
+
+  main {
+    flex: 1;
+    padding: 20px 20px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  /* Fuel level warning banner */
+  .fuel-warn {
+    background: var(--warn-dim);
+    border: 1px solid var(--warn-mid);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--warn);
+    line-height: 1.6;
+    display: none;
+  }
+  .fuel-warn.show { display: block; }
+
+  /* Current fuel pill */
+  .fuel-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .fuel-pill-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+  }
+
+  .fuel-pill-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .fuel-pill-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ODO input card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .odo-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .odo-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .odo-input-wrap:focus-within { border-color: var(--accent-mid); }
+
+  .odo-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 10px 4px;
+    -moz-appearance: textfield;
+    min-width: 0;
+  }
+  .odo-input::-webkit-outer-spin-button,
+  .odo-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .odo-unit {
+    padding-right: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .submit-btn {
+    -webkit-appearance: none;
+    padding: 0 20px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-mid);
+    border-radius: 12px;
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .submit-btn:active { background: rgba(45,255,143,0.22); }
+
+  .prev-odo {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .prev-odo span { color: var(--text); font-weight: 500; }
+
+  /* Latest trip hero */
+  .trip-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    display: none;
+  }
+  .trip-hero.show { display: block; }
+
+  .trip-hero::before {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -30px;
+    width: 140px; height: 140px;
+    background: var(--blue);
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.07;
+    pointer-events: none;
+  }
+
+  .trip-hero-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .trip-hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .trip-hero-stat { }
+
+  .trip-hero-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+
+  .trip-hero-val.accent { color: var(--accent); }
+
+  .trip-hero-unit {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .trip-hero-sublabel {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* History list */
+  .history-empty {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 24px 0;
+    display: none;
+  }
+  .history-empty.show { display: block; }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    position: relative;
+  }
+
+  .history-item:first-child {
+    border-color: var(--blue-mid);
+    background: var(--blue-dim);
+  }
+
+  .h-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+
+  .h-stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .history-date {
+    font-size: 10px;
+    color: var(--muted);
+    grid-column: 1 / -1;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .delete-btn {
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.2s;
+  }
+  .delete-btn:active { color: var(--danger); }
+
+  /* Clear all button */
+  .clear-btn {
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .clear-btn:active { border-color: rgba(255,77,77,0.4); color: var(--danger); }
+
+  footer {
+    text-align: center;
+    padding: 16px 20px calc(12px + var(--safe-bottom));
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    line-height: 1.8;
+  }
+  footer span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back-btn" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    Back
+  </a>
+  <h1>HEV Tracker</h1>
+</header>
+
+<main>
+
+  <!-- Fuel level not updated warning -->
+  <div class="fuel-warn" id="fuel-warn">
+    ⚠ The fuel level in the main app hasn't been updated since your last ODO entry. Update your fuel reading before submitting a new ODO for an accurate result.
+  </div>
+
+  <!-- Current fuel level pulled from main app -->
+  <div class="fuel-pill">
+    <div>
+      <div class="fuel-pill-label">Current fuel level</div>
+      <div class="fuel-pill-note" id="fuel-note">From main app calculation</div>
+    </div>
+    <div>
+      <div class="fuel-pill-val" id="fuel-display">— L</div>
+    </div>
+  </div>
+
+  <!-- ODO input -->
+  <div class="card">
+    <div class="card-title">HEV Odometer reading</div>
+    <div class="odo-row">
+      <div class="odo-input-wrap">
+        <input class="odo-input" type="number" id="odo-input" min="0" max="999999" step="1" placeholder="0">
+        <div class="odo-unit">km</div>
+      </div>
+      <button class="submit-btn" onclick="submitODO()">Submit</button>
+    </div>
+    <div class="prev-odo" id="prev-odo-display" style="display:none">
+      Previous reading: <span id="prev-odo-val">—</span> km
+    </div>
+  </div>
+
+  <!-- Latest trip result -->
+  <div class="trip-hero" id="trip-hero">
+    <div class="trip-hero-label">Latest trip</div>
+    <div class="trip-hero-grid">
+      <div class="trip-hero-stat">
+        <div class="trip-hero-sublabel">Distance</div>
+        <div class="trip-hero-val accent" id="latest-dist">—</div>
+        <div class="trip-hero-unit">km in HEV mode</div>
+      </div>
+      <div class="trip-hero-stat">
+        <div class="trip-hero-sublabel">Fuel used</div>
+        <div class="trip-hero-val accent" id="latest-fuel">—</div>
+        <div class="trip-hero-unit">litres</div>
+      </div>
+      <div class="trip-hero-stat">
+        <div class="trip-hero-sublabel">Consumption</div>
+        <div class="trip-hero-val" id="latest-economy">—</div>
+        <div class="trip-hero-unit">L/100km</div>
+      </div>
+      <div class="trip-hero-stat">
+        <div class="trip-hero-sublabel">ODO range</div>
+        <div class="trip-hero-val" id="latest-odo-range" style="font-size:16px; padding-top:4px;">—</div>
+        <div class="trip-hero-unit">km</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="divider">Trip history</div>
+
+  <div class="history-empty" id="history-empty">
+    No trips recorded yet. Submit two ODO readings to see your first trip.
+  </div>
+
+  <div class="history-list" id="history-list"></div>
+
+  <button class="clear-btn" id="clear-btn" onclick="clearAll()" style="display:none">
+    Clear all trip history
+  </button>
+
+</main>
+
+<footer>
+  <span>BYD Fuel Calculator</span><br>
+  © 2026 Ryan Cramp — All Rights Reserved
+</footer>
+
+<script>
+(function () {
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  const STORE_ENTRIES  = 'hevEntries';   // array of {odo, fuel, ts}
+  const STORE_FUEL_TS  = 'fuelValTs';    // timestamp of last fuel update in main app
+
+  let entries = [];  // [{odo, fuel, ts}, ...]
+
+  // ── Load ───────────────────────────────────────────────────────────────────
+  function load() {
+    try {
+      const s = localStorage.getItem(STORE_ENTRIES);
+      if (s) entries = JSON.parse(s);
+    } catch(e) { entries = []; }
+  }
+
+  function save() {
+    try { localStorage.setItem(STORE_ENTRIES, JSON.stringify(entries)); } catch(e) {}
+  }
+
+  // ── Get current fuel from main app localStorage ────────────────────────────
+  function getCurrentFuel() {
+    try {
+      const val = localStorage.getItem('fuelVal');
+      const tab = localStorage.getItem('fuelTab') || 'km';
+      if (!val) return null;
+
+      // Re-run interpolation using saved calibration
+      const FIXED_LITRES = [10, 20, 30, 40, 50, 60, 70, 80];
+      const DEFAULT_KM   = [0, 106, 106, 276, 276, 475, 581, 699];
+      const DEFAULT_BYD  = [0,  12,  12,  38,  38,  68,  83,  99];
+
+      function buildTable(readings, litres) {
+        const map = new Map();
+        readings.forEach((r, i) => {
+          if (!map.has(r)) map.set(r, []);
+          map.get(r).push(litres[i]);
+        });
+        const pairs = [];
+        map.forEach((ls, r) => pairs.push([r, ls.reduce((a,b)=>a+b,0)/ls.length]));
+        pairs.sort((a,b) => a[0]-b[0]);
+        return pairs;
+      }
+
+      function interp(v, table) {
+        if (v <= table[0][0]) {
+          const [x0,y0]=table[0],[x1,y1]=table[1];
+          return x1!==x0 ? y0+(v-x0)/(x1-x0)*(y1-y0) : y0;
+        }
+        if (v >= table[table.length-1][0]) {
+          const [x1,y1]=table[table.length-1];
+          let x0=x1,y0=y1;
+          for(let i=table.length-2;i>=0;i--){if(table[i][0]!==x1){[x0,y0]=table[i];break;}}
+          return y1+((y1-y0)/(x1-x0))*(v-x1);
+        }
+        for(let i=0;i<table.length-1;i++){
+          const [x0,y0]=table[i],[x1,y1]=table[i+1];
+          if(v>=x0&&v<=x1) return y0+(v-x0)/(x1-x0)*(y1-y0);
+        }
+        return table[table.length-1][1];
+      }
+
+      const savedKM  = localStorage.getItem('calKMreadings');
+      const savedBYD = localStorage.getItem('calBYDreadings');
+      const kmTable  = buildTable(savedKM  ? JSON.parse(savedKM)  : DEFAULT_KM,  FIXED_LITRES);
+      const bydTable = buildTable(savedBYD ? JSON.parse(savedBYD) : DEFAULT_BYD, FIXED_LITRES);
+
+      const raw = parseFloat(val);
+      return tab === 'byd' ? interp(raw, bydTable) : interp(raw, kmTable);
+    } catch(e) { return null; }
+  }
+
+  // ── Check if fuel has been updated since last ODO entry ────────────────────
+  function fuelIsStale() {
+    if (entries.length === 0) return false;
+    try {
+      const lastEntry  = entries[entries.length - 1];
+      const fuelTab    = localStorage.getItem('fuelTab');
+      const fuelVal    = localStorage.getItem('fuelVal');
+      // Compare stored fuel value at last entry to current
+      return Math.abs(lastEntry.fuel - getCurrentFuel()) < 0.1;
+    } catch(e) { return false; }
+  }
+
+  // ── Render fuel pill ───────────────────────────────────────────────────────
+  function renderFuelPill() {
+    const fuel = getCurrentFuel();
+    const el   = document.getElementById('fuel-display');
+    const note = document.getElementById('fuel-note');
+    if (fuel !== null) {
+      el.textContent   = fuel.toFixed(1) + ' L';
+      note.textContent = 'From main app — update there first if needed';
+    } else {
+      el.textContent   = '— L';
+      note.textContent = 'No fuel reading found — go to main app first';
+    }
+  }
+
+  // ── Render previous ODO ────────────────────────────────────────────────────
+  function renderPrevODO() {
+    const prevEl = document.getElementById('prev-odo-display');
+    const valEl  = document.getElementById('prev-odo-val');
+    if (entries.length > 0) {
+      const last = entries[entries.length - 1];
+      prevEl.style.display = 'block';
+      valEl.textContent    = last.odo.toLocaleString();
+    } else {
+      prevEl.style.display = 'none';
+    }
+  }
+
+  // ── Submit ODO ─────────────────────────────────────────────────────────────
+  window.submitODO = function () {
+    const input = document.getElementById('odo-input');
+    const odo   = parseFloat(input.value);
+
+    if (isNaN(odo) || odo <= 0) {
+      input.style.borderColor = 'var(--danger)';
+      setTimeout(() => input.style.borderColor = '', 1500);
+      return;
+    }
+
+    // Check ODO is greater than previous
+    if (entries.length > 0 && odo <= entries[entries.length - 1].odo) {
+      alert('New ODO reading must be greater than the previous reading (' + entries[entries.length-1].odo.toLocaleString() + ' km).');
+      return;
+    }
+
+    const fuel = getCurrentFuel();
+    if (fuel === null) {
+      alert('No fuel reading found. Please update your fuel level in the main app first.');
+      return;
+    }
+
+    // Warn if fuel unchanged since last entry
+    if (fuelIsStale()) {
+      document.getElementById('fuel-warn').classList.add('show');
+    } else {
+      document.getElementById('fuel-warn').classList.remove('show');
+    }
+
+    // Store entry
+    entries.push({ odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() });
+    save();
+
+    // Clear input
+    input.value = '';
+
+    renderAll();
+  };
+
+  // ── Render latest trip ─────────────────────────────────────────────────────
+  function renderLatestTrip() {
+    const hero = document.getElementById('trip-hero');
+    if (entries.length < 2) { hero.classList.remove('show'); return; }
+
+    const curr = entries[entries.length - 1];
+    const prev = entries[entries.length - 2];
+    const dist = curr.odo - prev.odo;
+    const fuel = prev.fuel - curr.fuel;  // fuel at start minus fuel at end
+    const econ = dist > 0 && fuel > 0 ? (fuel / dist) * 100 : null;
+
+    document.getElementById('latest-dist').textContent    = dist.toFixed(0);
+    document.getElementById('latest-fuel').textContent    = fuel > 0 ? fuel.toFixed(1) : '—';
+    document.getElementById('latest-economy').textContent = econ !== null ? econ.toFixed(1) : '—';
+    document.getElementById('latest-odo-range').textContent =
+      prev.odo.toLocaleString() + ' → ' + curr.odo.toLocaleString();
+
+    hero.classList.add('show');
+  }
+
+  // ── Render history list ────────────────────────────────────────────────────
+  function renderHistory() {
+    const list    = document.getElementById('history-list');
+    const empty   = document.getElementById('history-empty');
+    const clearBtn = document.getElementById('clear-btn');
+
+    // Need at least 2 entries to form a trip
+    const trips = [];
+    for (let i = entries.length - 1; i >= 1; i--) {
+      const curr = entries[i];
+      const prev = entries[i - 1];
+      const dist = curr.odo - prev.odo;
+      const fuel = prev.fuel - curr.fuel;
+      const econ = dist > 0 && fuel > 0 ? (fuel / dist) * 100 : null;
+      trips.push({ curr, prev, dist, fuel, econ, index: i });
+    }
+
+    if (trips.length === 0) {
+      empty.classList.add('show');
+      list.innerHTML = '';
+      clearBtn.style.display = 'none';
+      return;
+    }
+
+    empty.classList.remove('show');
+    clearBtn.style.display = 'block';
+
+    list.innerHTML = trips.map((t, ti) => {
+      const d    = new Date(t.curr.ts);
+      const date = d.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const isLatest = ti === 0;
+      return `
+        <div class="history-item">
+          <div>
+            <div class="h-stat-label">Distance</div>
+            <div class="h-stat-val">${t.dist.toFixed(0)} km</div>
+          </div>
+          <div>
+            <div class="h-stat-label">Fuel used</div>
+            <div class="h-stat-val">${t.fuel > 0 ? t.fuel.toFixed(1) + ' L' : '—'}</div>
+          </div>
+          <div>
+            <div class="h-stat-label">L/100km</div>
+            <div class="h-stat-val">${t.econ !== null ? t.econ.toFixed(1) : '—'}</div>
+          </div>
+          <div class="history-date">
+            <span>${date}${isLatest ? ' · Latest' : ''}</span>
+            <button class="delete-btn" onclick="deleteEntry(${t.index})">✕ Remove</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Delete single entry ────────────────────────────────────────────────────
+  window.deleteEntry = function(index) {
+    entries.splice(index, 1);
+    save();
+    renderAll();
+  };
+
+  // ── Clear all ──────────────────────────────────────────────────────────────
+  window.clearAll = function() {
+    if (!confirm('Clear all trip history? This cannot be undone.')) return;
+    entries = [];
+    save();
+    renderAll();
+  };
+
+  // ── Render all ─────────────────────────────────────────────────────────────
+  function renderAll() {
+    renderFuelPill();
+    renderPrevODO();
+    renderLatestTrip();
+    renderHistory();
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  load();
+  renderAll();
+
+})();
+</script>
+
+</body>
+</html>

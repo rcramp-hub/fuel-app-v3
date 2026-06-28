@@ -1,5 +1,11 @@
-const CACHE = 'fuel-v1.2';
-const ASSETS = ['./index.html', './manifest.json', './icon.svg', './userguide.html'];
+const CACHE = 'fuel-v1.3';
+const ASSETS = [
+  './index.html',
+  './manifest.json',
+  './icon.svg',
+  './userguide.html',
+  './hev.html'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
