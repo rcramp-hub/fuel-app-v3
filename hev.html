@@ -193,6 +193,29 @@
   .modal-btn.primary:active { background: rgba(181,122,255,0.22); }
   .modal-btn:active { background: var(--surface); }
 
+  /* Economy chart */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 16px 12px;
+    display: none;
+  }
+  .chart-card.show { display: block; }
+
+  .chart-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .chart-svg {
+    width: 100%;
+    overflow: visible;
+  }
+
   /* Latest trip hero */
   .trip-hero {
     background: var(--surface); border: 1px solid var(--border);
@@ -369,6 +392,12 @@
     </div>
   </div>
 
+  <!-- Economy chart -->
+  <div class="chart-card" id="chart-card">
+    <div class="chart-title">Economy — last 10 trips (L/100km)</div>
+    <svg class="chart-svg" id="chart-svg" height="140"></svg>
+  </div>
+
   <!-- History -->
   <div class="divider">Trip history</div>
   <div class="history-empty" id="history-empty">No trips recorded yet. Submit two ODO readings to see your first trip.</div>
@@ -376,6 +405,18 @@
   <button class="clear-btn" onclick="clearAll()">Clear all trip history</button>
 
 </main>
+
+<!-- Invalid trip modal -->
+<div class="modal-overlay" id="invalid-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--warn);">⚠ Invalid Trip Economy</div>
+    <div class="modal-body" id="invalid-modal-body"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="cancelInvalidTrip()">Cancel</button>
+      <button class="modal-btn" style="background:var(--warn-dim); border-color:var(--warn-mid); color:var(--warn);" onclick="confirmInvalidTrip()">Save anyway</button>
+    </div>
+  </div>
+</div>
 
 <!-- Refuel modal -->
 <div class="modal-overlay" id="refuel-modal">
@@ -406,8 +447,9 @@
   // ── State ──────────────────────────────────────────────────────────────────
   // Entry types: { type:'odo', odo, fuel, ts } or { type:'refuel', litres, ts }
   let entries = [];
-  let pendingODO  = null; // holds ODO value while waiting for refuel confirmation
-  let pendingFuel = null; // holds fuel snapshot at time of ODO submission
+  let pendingODO          = null; // holds ODO value while waiting for refuel confirmation
+  let pendingFuel         = null; // holds fuel snapshot at time of ODO submission
+  let pendingInvalidEntry = null; // holds {odo, fuel} when trip is invalid, awaiting user confirm
 
   // ── Persist ────────────────────────────────────────────────────────────────
   function load() {
@@ -568,12 +610,58 @@
   };
 
   function commitODO(odo, fuel) {
+    // Before saving, check if this trip will be invalid
+    // We need to preview what the trip would look like
+    const previewEntries = [...entries];
+    // Temporarily simulate the new entry to calculate the trip
+    const prevODOEntries = previewEntries.map((e,i)=>({...e,i})).filter(e=>e.type==='odo');
+
+    if (prevODOEntries.length >= 1) {
+      // Calculate what the refuel total between last ODO and now would be
+      const lastODO = prevODOEntries[prevODOEntries.length - 1];
+      let refuelTotal = 0;
+      for (let i = lastODO.i + 1; i < previewEntries.length; i++) {
+        if (previewEntries[i].type === 'refuel') refuelTotal += previewEntries[i].litres;
+      }
+      const dist     = odo - lastODO.odo;
+      const fuelUsed = lastODO.fuel - fuel + refuelTotal;
+      const economy  = dist > 0 && fuelUsed > 0 ? (fuelUsed / dist) * 100 : null;
+
+      if (economy === null || economy <= 0) {
+        // Build specific reason message
+        let reason = '';
+        if (fuelUsed <= 0) {
+          const net = (fuel - lastODO.fuel - refuelTotal).toFixed(1);
+          reason = refuelTotal > 0
+            ? 'After accounting for the ' + refuelTotal.toFixed(1) + 'L refuel you logged, your fuel level is still ' + Math.abs(net) + 'L higher than at the start of this trip (' + lastODO.fuel.toFixed(1) + 'L → ' + fuel.toFixed(1) + 'L). This suggests a refuel may not have been fully logged, or the fuel reading in the main app needs updating.'
+            : 'Your current fuel level (' + fuel.toFixed(1) + 'L) is the same as or higher than at the start of this trip (' + lastODO.fuel.toFixed(1) + 'L). Update your fuel reading in the main app before submitting, or log a refuel if you've added fuel.';
+        } else if (dist <= 0) {
+          reason = 'The odometer reading (' + odo.toLocaleString() + ' km) is not greater than the previous entry (' + lastODO.odo.toLocaleString() + ' km).';
+        } else {
+          reason = 'The economy figure could not be calculated with the available data.';
+        }
+
+        // Show invalid modal — don't save yet
+        pendingInvalidEntry = { odo, fuel };
+        document.getElementById('invalid-modal-body').innerHTML =
+          'This trip cannot calculate a valid fuel economy figure.<br><br>' +
+          '<strong style="color:var(--text)">Reason:</strong> ' + reason +
+          '<br><br>You can save it anyway (it will appear as an invalid entry in history) or cancel to fix the issue first.';
+        document.getElementById('invalid-modal').classList.add('show');
+        return;
+      }
+    }
+
+    // Trip is valid — save directly
+    finaliseODO(odo, fuel);
+  }
+
+  function finaliseODO(odo, fuel) {
     entries.push({ type: 'odo', odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() });
     save();
     document.getElementById('odo-input').value = '';
 
-    // If we now have at least two ODO entries, calculate economy and
-    // write it back to localStorage so the main app's burn rate updates
+    // Write economy back to main app if valid
     const odoEntries = entries.map((e,i)=>({...e,i})).filter(e=>e.type==='odo');
     if (odoEntries.length >= 2) {
       const prev = odoEntries[odoEntries.length-2];
@@ -582,7 +670,6 @@
       if (trip.economy !== null && trip.economy > 0) {
         try {
           localStorage.setItem('burnRate', trip.economy.toFixed(1));
-          // Show confirmation banner briefly
           const eb = document.getElementById('economy-updated-banner');
           eb.classList.add('show');
           setTimeout(() => eb.classList.remove('show'), 4000);
@@ -592,6 +679,19 @@
 
     renderAll();
   }
+
+  window.cancelInvalidTrip = function() {
+    document.getElementById('invalid-modal').classList.remove('show');
+    pendingInvalidEntry = null;
+  };
+
+  window.confirmInvalidTrip = function() {
+    document.getElementById('invalid-modal').classList.remove('show');
+    if (pendingInvalidEntry) {
+      finaliseODO(pendingInvalidEntry.odo, pendingInvalidEntry.fuel);
+      pendingInvalidEntry = null;
+    }
+  };
 
   // ── Refuel modal ───────────────────────────────────────────────────────────
   window.openRefuelModal = function(mode) {
@@ -776,11 +876,123 @@
     renderAll();
   };
 
+  // ── Render economy chart ──────────────────────────────────────────────────
+  function renderChart() {
+    const card = document.getElementById('chart-card');
+    const svg  = document.getElementById('chart-svg');
+
+    // Build trip list (same as renderHistory)
+    const odoEntries = entries.map((e,i) => ({...e,i})).filter(e => e.type === 'odo');
+    if (odoEntries.length < 2) { card.classList.remove('show'); return; }
+
+    // Build trips array — most recent first (latest on LEFT)
+    const trips = [];
+    for (let t = odoEntries.length - 1; t >= 1; t--) {
+      const prev = odoEntries[t-1];
+      const curr = odoEntries[t];
+      const trip = calcTrip(prev.i, curr.i);
+      trips.push(trip);
+      if (trips.length >= 10) break;
+    }
+
+    card.classList.add('show');
+
+    // Chart dimensions
+    const svgEl    = svg;
+    const W        = svgEl.parentElement.clientWidth - 32; // card padding
+    const H        = 140;
+    const padTop   = 28;  // space for value labels above bars
+    const padBot   = 22;  // space for trip labels below bars
+    const barArea  = H - padTop - padBot;
+    const n        = trips.length;
+    const gap      = 6;
+    const barW     = Math.floor((W - gap * (n - 1)) / n);
+    const maxEco   = 20; // L/100km ceiling for bar scale
+    const minEco   = 4;  // floor
+
+    // Colour helper
+    function ecoColor(eco) {
+      function lerp(a,b,t){return Math.round(a+(b-a)*t);}
+      function rgb(r,g,b){return 'rgb('+r+','+g+','+b+')';}
+      const green=[45,255,143], orange=[255,184,48], red=[255,77,77];
+      const t = Math.min(1, Math.max(0, (eco - minEco) / (maxEco - minEco)));
+      if (t < 0.5) {
+        const t2 = t / 0.5;
+        return rgb(lerp(green[0],orange[0],t2),lerp(green[1],orange[1],t2),lerp(green[2],orange[2],t2));
+      } else {
+        const t2 = (t-0.5)/0.5;
+        return rgb(lerp(orange[0],red[0],t2),lerp(orange[1],red[1],t2),lerp(orange[2],red[2],t2));
+      }
+    }
+
+    // Build SVG
+    let svgContent = '';
+
+    // Y axis guide line
+    svgContent += `<line x1="0" y1="${padTop}" x2="${W}" y2="${padTop}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+    svgContent += `<line x1="0" y1="${padTop + barArea/2}" x2="${W}" y2="${padTop + barArea/2}" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="3,3"/>`;
+
+    trips.forEach((trip, i) => {
+      const x       = i * (barW + gap);
+      const valid   = trip.economy !== null && trip.economy > 0;
+      const isFirst = i === 0; // latest trip
+
+      let barH, barY, color, label;
+
+      if (valid) {
+        const clampedEco = Math.min(maxEco, Math.max(minEco, trip.economy));
+        barH  = Math.round(((clampedEco - minEco) / (maxEco - minEco)) * barArea);
+        barH  = Math.max(6, barH); // minimum visible height
+        barY  = padTop + barArea - barH;
+        color = ecoColor(trip.economy);
+        label = trip.economy.toFixed(1);
+      } else {
+        // Invalid — grey placeholder at 15% height
+        barH  = Math.round(barArea * 0.15);
+        barY  = padTop + barArea - barH;
+        color = 'rgba(122,128,153,0.3)';
+        label = '—';
+      }
+
+      // Bar
+      const radius = Math.min(4, barW / 3);
+      svgContent += `<rect x="${x}" y="${barY}" width="${barW}" height="${barH}"
+        rx="${radius}" fill="${color}" opacity="${isFirst ? '1' : '0.75'}"/>`;
+
+      // Highlight outline for latest trip
+      if (isFirst) {
+        svgContent += `<rect x="${x}" y="${barY}" width="${barW}" height="${barH}"
+          rx="${radius}" fill="none" stroke="${valid ? color : 'rgba(122,128,153,0.5)'}" stroke-width="1.5" opacity="0.5"/>`;
+      }
+
+      // Value label above bar
+      svgContent += `<text x="${x + barW/2}" y="${barY - 5}"
+        text-anchor="middle" font-family="Space Mono, monospace"
+        font-size="9" font-weight="700"
+        fill="${valid ? color : 'rgba(122,128,153,0.5)'}">${label}</text>`;
+
+      // Refuel dot at base of bar
+      if (valid && trip.refuelTotal > 0) {
+        svgContent += `<circle cx="${x + barW/2}" cy="${padTop + barArea + 5}" r="3" fill="var(--purple)"/>`;
+      }
+
+      // Trip label below (1 = latest)
+      const tripLabel = i === 0 ? 'Latest' : `T-${i}`;
+      svgContent += `<text x="${x + barW/2}" y="${H - 2}"
+        text-anchor="middle" font-family="DM Sans, sans-serif"
+        font-size="8" fill="rgba(122,128,153,${isFirst ? '0.9' : '0.5'})">${tripLabel}</text>`;
+    });
+
+    svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svgEl.innerHTML = svgContent;
+  }
+
   // ── Render all ─────────────────────────────────────────────────────────────
   function renderAll() {
     renderFuelPill();
     renderPrevODO();
     renderLatestTrip();
+    renderChart();
     renderHistory();
   }
 
