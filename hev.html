@@ -631,12 +631,13 @@
       return;
     }
 
-    // Warn if fuel unchanged since last entry
+    // Block submission if fuel level unchanged since last entry
     if (fuelIsStale()) {
       document.getElementById('fuel-warn').classList.add('show');
-    } else {
-      document.getElementById('fuel-warn').classList.remove('show');
+      return; // stop — do not register entry until fuel is updated
     }
+
+    document.getElementById('fuel-warn').classList.remove('show');
 
     // Store entry
     entries.push({ odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() });
