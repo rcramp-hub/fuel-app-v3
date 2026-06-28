@@ -633,10 +633,8 @@
         if (fuelUsed <= 0) {
           const net = (fuel - lastODO.fuel - refuelTotal).toFixed(1);
           reason = refuelTotal > 0
-            ? 'After accounting for the ' + refuelTotal.toFixed(1) + 'L refuel you logged, your fuel level is still ' + Math.abs(net) + 'L higher than at the start of this trip (' + lastODO.fuel.toFixed(1) + 'L → ' + fuel.toFixed(1) + 'L). This suggests a refuel may not have been fully logged, or the fuel reading in the main app needs updating.'
-            : 'Your current fuel level (' + fuel.toFixed(1) + 'L) is the same as or higher than at the start of this trip (' + lastODO.fuel.toFixed(1) + 'L). Update your fuel reading in the main app before submitting, or log a refuel if you've added fuel.';
-        } else if (dist <= 0) {
-          reason = 'The odometer reading (' + odo.toLocaleString() + ' km) is not greater than the previous entry (' + lastODO.odo.toLocaleString() + ' km).';
+            ? `After accounting for the ${refuelTotal.toFixed(1)}L refuel you logged, your fuel level is still ${Math.abs(parseFloat(net))}L higher than at the start of this trip (${lastODO.fuel.toFixed(1)}L → ${fuel.toFixed(1)}L). This suggests a refuel may not have been fully logged, or the fuel reading in the main app needs updating.`
+            : `Your current fuel level (${fuel.toFixed(1)}L) is the same as or higher than at the start of this trip (${lastODO.fuel.toFixed(1)}L). Update your fuel reading in the main app before submitting, or log a refuel if you have added fuel.`;
         } else {
           reason = 'The economy figure could not be calculated with the available data.';
         }
