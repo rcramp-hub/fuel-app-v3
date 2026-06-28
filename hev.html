@@ -485,7 +485,7 @@
 
   <div class="history-list" id="history-list"></div>
 
-  <button class="clear-btn" id="clear-btn" onclick="clearAll()" style="display:none">
+  <button class="clear-btn" id="clear-btn" onclick="clearAll()">
     Clear all trip history
   </button>
 
@@ -689,12 +689,10 @@
     if (trips.length === 0) {
       empty.classList.add('show');
       list.innerHTML = '';
-      clearBtn.style.display = 'none';
       return;
     }
 
     empty.classList.remove('show');
-    clearBtn.style.display = 'block';
 
     list.innerHTML = trips.map((t, ti) => {
       const d    = new Date(t.curr.ts);
@@ -731,9 +729,23 @@
 
   // ── Clear all ──────────────────────────────────────────────────────────────
   window.clearAll = function() {
-    if (!confirm('Clear all trip history? This cannot be undone.')) return;
+    const count = entries.length;
+    const trips = Math.max(0, count - 1);
+    const msg = [
+      'Are you sure you want to clear all HEV tracker data?',
+      '',
+      'This will permanently delete:',
+      '  • ' + count + ' odometer entr' + (count === 1 ? 'y' : 'ies'),
+      '  • ' + trips + ' recorded trip' + (trips === 1 ? '' : 's'),
+      '  • All fuel consumption history',
+      '',
+      'This cannot be undone.'
+    ].join('
+');
+    if (!confirm(msg)) return;
     entries = [];
     save();
+    document.getElementById('fuel-warn').classList.remove('show');
     renderAll();
   };
 
