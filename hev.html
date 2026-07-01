@@ -410,6 +410,7 @@
     Back
   </a>
   <h1>HEV Tracker</h1>
+  <span id="hev-profile-name" style="font-size:11px; color:var(--muted); font-family:'DM Sans',sans-serif; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px 10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
 </header>
 
 <main>
@@ -562,6 +563,14 @@
 <script>
 (function () {
 
+  // ── Profile helpers (shared with index.html) ──────────────────────────────
+  function getActiveProfileId() {
+    return localStorage.getItem('activeProfile') || '';
+  }
+  function pKey(key) { return 'p_' + getActiveProfileId() + '_' + key; }
+  function pGet(key) { try { return localStorage.getItem(pKey(key)); } catch(e) { return null; } }
+  function pSet(key, val) { try { localStorage.setItem(pKey(key), val); } catch(e) {} }
+
   // ── State ──────────────────────────────────────────────────────────────────
   // Entry types: { type:'odo', odo, fuel, ts } or { type:'refuel', litres, ts }
   let entries = [];
@@ -571,18 +580,18 @@
 
   // ── Persist ────────────────────────────────────────────────────────────────
   function load() {
-    try { const s = localStorage.getItem('hevEntries'); if (s) entries = JSON.parse(s); } catch(e) { entries = []; }
+    try { const s = pGet('hevEntries'); if (s) entries = JSON.parse(s); } catch(e) { entries = []; }
   }
 
   function save() {
-    try { localStorage.setItem('hevEntries', JSON.stringify(entries)); } catch(e) {}
+    try { pSet('hevEntries', JSON.stringify(entries)); } catch(e) {}
   }
 
   // ── Get current fuel from main app ─────────────────────────────────────────
   function getCurrentFuel() {
     try {
-      const val = localStorage.getItem('fuelVal');
-      const tab = localStorage.getItem('fuelTab') || 'km';
+      const val = pGet('fuelVal');
+      const tab = pGet('fuelTab') || 'km';
       if (!val) return null;
 
       const FIXED = [10,20,30,40,50,60,70,80];
@@ -604,8 +613,8 @@
         return t[t.length-1][1];
       }
 
-      const skm  = localStorage.getItem('calKMreadings');
-      const sbyd = localStorage.getItem('calBYDreadings');
+      const skm  = pGet('calKMreadings');
+      const sbyd = pGet('calBYDreadings');
       const kt   = buildTable(skm  ? JSON.parse(skm)  : DKM,  FIXED);
       const bt   = buildTable(sbyd ? JSON.parse(sbyd) : DBYD, FIXED);
       return tab==='byd' ? interp(parseFloat(val), bt) : interp(parseFloat(val), kt);
@@ -881,7 +890,7 @@
       const trip = calcTrip(prev.i, curr.i);
       if (trip.economy !== null && trip.economy > 0) {
         try {
-          localStorage.setItem('burnRate', trip.economy.toFixed(1));
+          pSet('burnRate', trip.economy.toFixed(1));
           const eb = document.getElementById('economy-updated-banner');
           eb.classList.add('show');
           setTimeout(() => eb.classList.remove('show'), 4000);
@@ -1257,6 +1266,14 @@
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
+  // Show active profile name
+  try {
+    const profiles = JSON.parse(localStorage.getItem('profiles') || '[]');
+    const activeId = localStorage.getItem('activeProfile') || '';
+    const active = profiles.find(p => p.id === activeId);
+    if (active) document.getElementById('hev-profile-name').textContent = active.name;
+  } catch(e) {}
+
   load();
   renderAll();
 
