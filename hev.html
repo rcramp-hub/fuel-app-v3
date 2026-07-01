@@ -158,6 +158,8 @@
     transform: translateY(20px); transition: transform 0.25s;
   }
   .modal-overlay.show .modal { transform: translateY(0); }
+  .modal-top { transform: translateY(-20px); }
+  .modal-overlay.show .modal-top { transform: translateY(0); }
 
   .modal-title {
     font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700;
@@ -467,8 +469,8 @@
 </div>
 
 <!-- Trip preview modal -->
-<div class="modal-overlay" id="preview-modal">
-  <div class="modal">
+<div class="modal-overlay" id="preview-modal" style="align-items:flex-start; padding-top:60px;">
+  <div class="modal modal-top">
     <div class="modal-title" style="color:var(--blue);">Trip Preview</div>
     <div class="modal-body" id="preview-body" style="padding:0;"></div>
     <div class="modal-actions">
