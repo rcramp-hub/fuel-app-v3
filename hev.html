@@ -193,6 +193,54 @@
   .modal-btn.primary:active { background: rgba(181,122,255,0.22); }
   .modal-btn:active { background: var(--surface); }
 
+  /* Preview stats */
+  .preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  .preview-stat {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+
+  .preview-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .preview-stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+
+  .preview-stat-val.accent { color: var(--accent); }
+  .preview-stat-val.warn   { color: var(--warn); }
+
+  .preview-stat-unit {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .preview-note {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
   /* Economy chart */
   .chart-card {
     background: var(--surface);
@@ -418,6 +466,18 @@
   </div>
 </div>
 
+<!-- Trip preview modal -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--blue);">Trip Preview</div>
+    <div class="modal-body" id="preview-body" style="padding:0;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="cancelPreview()">Cancel</button>
+      <button class="modal-btn" style="background:var(--accent-dim); border-color:var(--accent-mid); color:var(--accent);" onclick="endTrip()">End Trip</button>
+    </div>
+  </div>
+</div>
+
 <!-- Refuel modal -->
 <div class="modal-overlay" id="refuel-modal">
   <div class="modal">
@@ -606,7 +666,103 @@
     document.getElementById('stale-warn').classList.remove('show');
     document.getElementById('refuel-detected-banner').classList.remove('show');
 
-    commitODO(odo, fuel);
+    showTripPreview(odo, fuel);
+  };
+
+  // ── Trip preview ──────────────────────────────────────────────────────────
+  let pendingPreview = null; // {odo, fuel} waiting for user to End Trip or Cancel
+
+  function showTripPreview(odo, fuel) {
+    const prevODOEntries = entries.map((e,i)=>({...e,i})).filter(e=>e.type==='odo');
+    const body = document.getElementById('preview-body');
+
+    if (prevODOEntries.length === 0) {
+      // First ever entry — no trip to preview, just confirm start
+      pendingPreview = { odo, fuel };
+      body.innerHTML = `
+        <div style="margin-bottom:8px;">This will be your <strong>first odometer entry</strong> — it sets the starting point for future trips.</div>
+        <div class="preview-grid">
+          <div class="preview-stat">
+            <div class="preview-stat-label">Starting ODO</div>
+            <div class="preview-stat-val accent">${odo.toLocaleString()}</div>
+            <div class="preview-stat-unit">km</div>
+          </div>
+          <div class="preview-stat">
+            <div class="preview-stat-label">Fuel level</div>
+            <div class="preview-stat-val accent">${fuel.toFixed(1)}</div>
+            <div class="preview-stat-unit">litres</div>
+          </div>
+        </div>
+        <div class="preview-note">Tap <strong>End Trip</strong> to confirm this starting point, or <strong>Cancel</strong> to go back.</div>`;
+      document.getElementById('preview-modal').classList.add('show');
+      return;
+    }
+
+    // Calculate preview trip data
+    const lastODO = prevODOEntries[prevODOEntries.length - 1];
+    let refuelTotal = 0;
+    for (let i = lastODO.i + 1; i < entries.length; i++) {
+      if (entries[i].type === 'refuel') refuelTotal += entries[i].litres;
+    }
+    const dist     = odo - lastODO.odo;
+    const fuelUsed = lastODO.fuel - fuel + refuelTotal;
+    const economy  = dist > 0 && fuelUsed > 0 ? (fuelUsed / dist) * 100 : null;
+    const valid    = economy !== null && economy > 0;
+
+    pendingPreview = { odo, fuel };
+
+    // Build colour for economy
+    let ecoColor = 'var(--blue)';
+    let ecoClass = '';
+    if (valid) {
+      if (economy < 10) ecoClass = 'accent';
+      else if (economy > 15) ecoClass = 'warn';
+    }
+
+    body.innerHTML = `
+      <div style="margin-bottom:4px;">Here is the summary of this trip:</div>
+      <div class="preview-grid">
+        <div class="preview-stat">
+          <div class="preview-stat-label">Distance</div>
+          <div class="preview-stat-val accent">${dist.toFixed(0)}</div>
+          <div class="preview-stat-unit">km</div>
+        </div>
+        <div class="preview-stat">
+          <div class="preview-stat-label">Fuel used</div>
+          <div class="preview-stat-val accent">${fuelUsed > 0 ? fuelUsed.toFixed(1) : '\u2014'}</div>
+          <div class="preview-stat-unit">litres</div>
+        </div>
+        <div class="preview-stat">
+          <div class="preview-stat-label">Economy</div>
+          <div class="preview-stat-val ${ecoClass}">${valid ? economy.toFixed(1) : '\u2014'}</div>
+          <div class="preview-stat-unit">L/100km</div>
+        </div>
+        <div class="preview-stat">
+          <div class="preview-stat-label">Refuel added</div>
+          <div class="preview-stat-val" style="color:var(--purple)">${refuelTotal > 0 ? refuelTotal.toFixed(1) : '\u2014'}</div>
+          <div class="preview-stat-unit">litres</div>
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--muted); display:flex; justify-content:space-between; padding:0 2px;">
+        <span>ODO: ${lastODO.odo.toLocaleString()} \u2192 ${odo.toLocaleString()} km</span>
+        <span>Fuel: ${lastODO.fuel.toFixed(1)} \u2192 ${fuel.toFixed(1)} L</span>
+      </div>
+      ${!valid ? '<div class="preview-note" style="color:var(--warn);">\u26a0 Economy could not be calculated. You can still end the trip \u2014 it will be saved as an invalid entry.</div>' : '<div class="preview-note">Tap <strong>End Trip</strong> to save this entry, or <strong>Cancel</strong> to continue driving without ending the trip.</div>'}`;
+
+    document.getElementById('preview-modal').classList.add('show');
+  }
+
+  window.cancelPreview = function() {
+    document.getElementById('preview-modal').classList.remove('show');
+    pendingPreview = null;
+  };
+
+  window.endTrip = function() {
+    document.getElementById('preview-modal').classList.remove('show');
+    if (pendingPreview) {
+      commitODO(pendingPreview.odo, pendingPreview.fuel);
+      pendingPreview = null;
+    }
   };
 
   function commitODO(odo, fuel) {
