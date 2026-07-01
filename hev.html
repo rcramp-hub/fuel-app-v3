@@ -195,6 +195,54 @@
   .modal-btn.primary:active { background: rgba(181,122,255,0.22); }
   .modal-btn:active { background: var(--surface); }
 
+  /* Refuel entry items */
+  .refuel-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--purple-dim);
+    border: 1px solid var(--purple-mid);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+  }
+
+  .refuel-entry-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .refuel-entry-info {
+    flex: 1;
+  }
+
+  .refuel-entry-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--purple);
+  }
+
+  .refuel-entry-time {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .refuel-entry-remove {
+    -webkit-appearance: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .refuel-entry-remove:active { color: var(--danger); border-color: rgba(255,77,77,0.4); }
+
   /* Preview stats */
   .preview-grid {
     display: grid;
@@ -405,10 +453,18 @@
     </div>
   </div>
 
-  <!-- Log refuel button -->
-  <button class="btn purple full" onclick="openRefuelModal(null)">
-    ⛽ Log a refuel
-  </button>
+  <!-- Log refuel button / status -->
+  <div id="refuel-area">
+    <button class="btn purple full" id="refuel-btn" onclick="openRefuelModal(null)">
+      ⛽ Log a refuel
+    </button>
+    <div id="refuel-logged" style="display:none;">
+      <div id="refuel-entries-list"></div>
+      <button class="btn purple full" onclick="openRefuelModal(null)" style="margin-top:8px; padding:10px; font-size:13px;">
+        + Add another refuel
+      </button>
+    </div>
+  </div>
 
   <!-- Latest trip -->
   <div class="trip-hero" id="trip-hero">
@@ -909,6 +965,53 @@
     return { dist, fuelUsed, economy, refuelTotal };
   }
 
+  // ── Render refuel area ─────────────────────────────────────────────────────
+  function renderRefuelArea() {
+    const btn    = document.getElementById('refuel-btn');
+    const logged = document.getElementById('refuel-logged');
+    const list   = document.getElementById('refuel-entries-list');
+
+    // Collect refuel entries since last ODO
+    const refuels = [];
+    for (let i = entries.length - 1; i >= 0; i--) {
+      if (entries[i].type === 'odo') break;
+      if (entries[i].type === 'refuel') refuels.unshift({ entry: entries[i], index: i });
+    }
+
+    if (refuels.length > 0) {
+      btn.style.display    = 'none';
+      logged.style.display = 'block';
+
+      const total = refuels.reduce((sum, r) => sum + r.entry.litres, 0);
+
+      list.innerHTML = refuels.map(r => {
+        const d = new Date(r.entry.ts);
+        const time = d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="refuel-entry">
+            <div class="refuel-entry-icon">⛽</div>
+            <div class="refuel-entry-info">
+              <div class="refuel-entry-val">${r.entry.litres.toFixed(1)} L added</div>
+              <div class="refuel-entry-time">${time}</div>
+            </div>
+            <button class="refuel-entry-remove" onclick="removeRefuel(${r.index})">Remove</button>
+          </div>`;
+      }).join('')
+      + (refuels.length > 1
+        ? `<div style="text-align:center; font-family:'Space Mono',monospace; font-size:12px; color:var(--purple); padding:4px 0;">Total: ${total.toFixed(1)} L</div>`
+        : '');
+    } else {
+      btn.style.display    = 'block';
+      logged.style.display = 'none';
+    }
+  }
+
+  window.removeRefuel = function(index) {
+    entries.splice(index, 1);
+    save();
+    renderAll();
+  };
+
   // ── Render latest trip ─────────────────────────────────────────────────────
   function renderLatestTrip() {
     const hero = document.getElementById('trip-hero');
@@ -1147,6 +1250,7 @@
   function renderAll() {
     renderFuelPill();
     renderPrevODO();
+    renderRefuelArea();
     renderLatestTrip();
     renderChart();
     renderHistory();
