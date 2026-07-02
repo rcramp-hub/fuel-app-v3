@@ -139,6 +139,56 @@
   .last-updated { font-size: 11px; color: var(--muted); text-align: center; padding: 0 16px 14px; min-height: 16px; letter-spacing: 0.03em; }
   .validation-msg { font-size: 11px; color: var(--danger); padding: 6px 16px 10px; display: none; line-height: 1.5; }
   .validation-msg.show { display: block; }
+  /* Fill to Full */
+  .fill-badge {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    background: rgba(77,159,255,0.12);
+    border: 1px solid rgba(77,159,255,0.35);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: #4d9fff;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .fill-badge.show { display: flex; }
+
+  .fill-input-card {
+    display: none;
+    background: var(--surface);
+    border: 1px solid rgba(77,159,255,0.35);
+    border-radius: 16px;
+    padding: 18px 18px 14px;
+  }
+  .fill-input-card.show { display: block; }
+
+  .fill-exit-btn {
+    -webkit-appearance: none;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .fill-exit-btn:active { color: var(--accent); border-color: var(--accent-mid); }
+
+  .fill-modal-slider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0;
+  }
+
   .share-btn { -webkit-appearance: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 40px); margin: 0 20px 16px; padding: 13px; background: var(--accent-dim); border: 1px solid var(--accent-mid); border-radius: 12px; color: var(--accent); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
   .share-btn:active { background: rgba(45,255,143,0.22); }
   .share-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
@@ -189,6 +239,7 @@
     </svg>
   </div>
   <h1>Fuel Calculator</h1>
+  <div class="fill-badge" id="fill-badge">⛽ FILL MODE</div>
   <a href="hev.html" class="hev-header-btn">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     HEV Trip Data
@@ -243,6 +294,23 @@
     Settings — Calibration Data
     <svg class="settings-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
+
+  <!-- Fill mode input (shown only in fill mode) -->
+  <div class="fill-input-card" id="fill-input-card">
+    <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#4d9fff; margin-bottom:14px;">⛽ Fill mode — estimated from km driven</div>
+    <div class="source-badge" style="background:rgba(77,159,255,0.12); color:#4d9fff;">Km driven since fill</div>
+    <div class="num-input-wrap" style="border-color:rgba(77,159,255,0.35);">
+      <input class="num-input" type="number" id="val-fill-km" min="0" max="9999" placeholder="0" oninput="updateFillMode()">
+      <div class="num-unit">km</div>
+    </div>
+    <div class="slider-row">
+      <input type="range" id="slider-fill-km" min="0" max="1000" step="1" value="0" oninput="syncFillSlider()">
+      <div class="slider-val" id="slval-fill-km" style="color:#4d9fff;">0 km</div>
+    </div>
+    <div class="hint">Enter how many km you have driven since your last fill-up. Check your trip meter or calculate from your odometer.</div>
+    <button class="fill-exit-btn" onclick="exitFillMode()">Switch to sender mode</button>
+  </div>
+
 </main>
 
 <div class="settings-panel" id="settings-panel">
@@ -257,6 +325,19 @@
     <div class="settings-note">Fill your tank to each level and note what % your BYD app shows. Greyed values are the original BYD calibration data for reference.</div>
   </div>
   <div class="settings-section">
+    <div class="settings-section-title">Total tank capacity</div>
+    <div style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+      <span style="font-size:13px; color:var(--muted); flex:1;">Actual tank size (including blind zone)</span>
+      <input class="cal-input" type="number" id="total-cap-input" min="20" max="300" step="1" style="width:82px;" value="120">
+      <span style="font-size:12px; color:var(--muted);">L</span>
+    </div>
+    <div class="settings-note">This is the total volume of your aftermarket tank — not the sender's visible range. Used by the Fill to Full feature to calculate fuel remaining above the sender's measurement limit.</div>
+    <div style="padding:0 16px 14px;">
+      <button class="s-btn primary" style="width:100%;" onclick="saveTotalCap()">Save tank capacity</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
     <div class="validation-msg" id="validation-msg"></div>
     <div class="settings-actions">
       <button class="s-btn" onclick="resetToDefaults()">Reset to defaults</button>
@@ -267,14 +348,14 @@
   </div>
 </div>
 
-<!-- Profile modal -->
-<div class="modal-overlay" id="profile-modal">
+<!-- Fill to Full modal -->
+<div class="modal-overlay" id="fill-modal">
   <div class="modal">
-    <div class="modal-title">Vehicle Profiles</div>
-    <div class="modal-body">Switch between vehicles or add a new one. Each profile stores its own calibration, fuel data, and HEV trip history.</div>
-    <div class="profile-list" id="profile-list"></div>
-    <div class="profile-add-row">
-      <input class="profile-add-input" id="profile-add-input" type="text" placeholder="New vehicle name..." maxlength="30">
+    <div class="modal-title" style="color:#4d9fff;">⛽ Fill to Full</div>
+    <div class="modal-body">
+      Confirm your tank capacity and fuel burn rate. The app will estimate fuel remaining based on km driven until the sender takes over.
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2);xt" placeholder="New vehicle name..." maxlength="30">
       <button class="profile-add-btn" onclick="addProfile()">Add</button>
     </div>
     <button class="modal-close" onclick="closeProfileModal()">Close</button>
@@ -302,7 +383,7 @@
   <span style="color:var(--accent);">BYD Fuel Calculator</span><br>
   © 2026 Ryan Cramp — All Rights Reserved<br>
   <a href="userguide.html" style="color:var(--muted); text-decoration:none; border-bottom:1px solid var(--border); padding-bottom:1px; margin-top:4px; display:inline-block; letter-spacing:0.04em;">User Guide</a><br>
-  <span style="color:var(--surface2); font-size:10px; letter-spacing:0.1em; margin-top:2px; display:inline-block;">v1.4</span>
+  <span style="color:var(--surface2); font-size:10px; letter-spacing:0.1em; margin-top:2px; display:inline-block;">v1.5</span>
 </footer>
 
 <script>
@@ -549,8 +630,17 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').
         document.getElementById('burn-val').textContent = '12.0 L/100km';
       }
     } catch(e){}
+    // Load total tank capacity into settings field
+    document.getElementById('total-cap-input').value = getTotalCap();
+
     clearOverride();
-    update();
+
+    // Check fill mode state
+    fillModeActive = false;
+    exitFillUI();
+    loadFillState();
+
+    if (!fillModeActive) update();
   }
 
   // ── Tab management ──────────────────────────────────────────────────────
@@ -719,6 +809,108 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').
     const d={title:'BYD Fuel Calculator',text:'A calibrated fuel calculator for BYD vehicles with aftermarket tanks.',url:window.location.href};
     if(navigator.share){try{await navigator.share(d);}catch(e){}}
     else{try{await navigator.clipboard.writeText(window.location.href);alert('Link copied to clipboard!');}catch(e){alert('Share link: '+window.location.href);}}
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // FILL TO FULL MODE
+  // ══════════════════════════════════════════════════════════════════════════
+
+  let fillModeActive = false;
+
+  function loadFillState() {
+    try {
+      const active = pGet('fillActive');
+      if (active === 'true') {
+        fillModeActive = true;
+        enterFillUI();
+        const km = pGet('fillKmDriven');
+        if (km) {
+          document.getElementById('val-fill-km').value = km;
+          document.getElementById('slider-fill-km').value = Math.min(km, 1000);
+          document.getElementById('slval-fill-km').textContent = km + ' km';
+        }
+        updateFillMode();
+      }
+    } catch(e) {}
+  }
+
+  function getTotalCap() {
+    const saved = pGet('totalTankCap');
+    return saved ? parseFloat(saved) : 120;
+  }
+
+  window.saveTotalCap = function() {
+    const val = parseFloat(document.getElementById('total-cap-input').value);
+    if (isNaN(val) || val <= 0) return;
+    pSet('totalTankCap', val);
+    const msg = document.getElementById('save-confirm');
+    msg.textContent = '✓ Tank capacity saved';
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 3000);
+  };
+
+  function enterFillUI() {
+    document.getElementById('fill-badge').classList.add('show');
+    document.getElementById('fill-input-card').classList.add('show');
+    // Hide normal input card
+    document.querySelector('.card').style.display = 'none';
+  }
+
+  function exitFillUI() {
+    document.getElementById('fill-badge').classList.remove('show');
+    document.getElementById('fill-input-card').classList.remove('show');
+    document.querySelector('.card').style.display = 'block';
+  }
+
+  window.exitFillMode = function() {
+    fillModeActive = false;
+    pRemove('fillActive');
+    pRemove('fillKmDriven');
+    exitFillUI();
+    // Load total tank capacity into settings field
+    document.getElementById('total-cap-input').value = getTotalCap();
+
+    clearOverride();
+
+    // Check fill mode state
+    fillModeActive = false;
+    exitFillUI();
+    loadFillState();
+
+    if (!fillModeActive) update();
+  };
+
+  window.syncFillSlider = function() {
+    const val = document.getElementById('slider-fill-km').value;
+    document.getElementById('val-fill-km').value = val;
+    document.getElementById('slval-fill-km').textContent = val + ' km';
+    updateFillMode();
+  };
+
+  window.updateFillMode = function() {
+    const kmEl = document.getElementById('val-fill-km');
+    const km = parseFloat(kmEl.value) || 0;
+    const cap = parseFloat(pGet('fillCapacity')) || getTotalCap();
+    const burn = parseFloat(pGet('fillBurnRate')) || 12;
+    const litres = Math.max(0, cap - (km * burn / 100));
+
+    // Save km driven for persistence
+    pSet('fillKmDriven', km);
+
+    // Sync slider
+    document.getElementById('slider-fill-km').value = Math.min(km, 1000);
+    document.getElementById('slval-fill-km').textContent = km + ' km';
+
+    // Apply to display
+    applyLitres(litres);
+
+    // Check if sender should take over
+    const senderCap = calcTankCap();
+    const alert = document.getElementById('alert-box');
+    if (litres <= senderCap) {
+      alert.className = 'alert warn';
+      alert.textContent = 'Fuel is now within sender range (' + senderCap.toFixed(1) + 'L). Consider switching to sender mode for more accurate readings.';
+    }
   };
 
   // ══════════════════════════════════════════════════════════════════════════
