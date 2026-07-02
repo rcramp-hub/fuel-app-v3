@@ -733,6 +733,13 @@
 
   // ── Render fuel pill ───────────────────────────────────────────────────────
   function renderFuelPill() {
+    const fillActive = pGet('fillActive') === 'true';
+    if (fillActive) {
+      const totalCap = getTotalCap();
+      document.getElementById('fuel-display').textContent = totalCap.toFixed(1) + ' L';
+      document.getElementById('fuel-note').textContent = 'Fill to Full active — full tank capacity';
+      return;
+    }
     const fuel = getCurrentFuel();
     document.getElementById('fuel-display').textContent = fuel !== null ? fuel.toFixed(1)+' L' : '— L';
     document.getElementById('fuel-note').textContent    = fuel !== null

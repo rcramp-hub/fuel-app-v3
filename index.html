@@ -307,6 +307,10 @@
       <input type="range" id="slider-fill-km" min="0" max="1000" step="1" value="0" oninput="syncFillSlider()">
       <div class="slider-val" id="slval-fill-km" style="color:#4d9fff;">0 km</div>
     </div>
+    <div id="fill-sender-info" style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:8px; padding:8px 12px; margin-top:10px; font-size:11px;">
+      <span style="color:var(--muted);">Sender activates at approx.</span>
+      <span style="font-family:'Space Mono',monospace; font-weight:700; color:#4d9fff;" id="fill-sender-km">— km</span>
+    </div>
     <div class="hint">Enter how many km you have driven since your last fill-up. Check your trip meter or calculate from your odometer.</div>
     <button class="fill-exit-btn" onclick="exitFillMode()">Switch to sender mode</button>
   </div>
@@ -854,6 +858,14 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').
     document.getElementById('fill-input-card').classList.add('show');
     // Hide normal input card
     document.querySelector('.card').style.display = 'none';
+    // Calculate and show sender activation km
+    const cap = parseFloat(pGet('fillCapacity')) || getTotalCap();
+    const burn = parseFloat(pGet('fillBurnRate')) || 12;
+    const senderCap = calcTankCap();
+    const senderKm = Math.round((cap - senderCap) / burn * 100);
+    document.getElementById('fill-sender-km').textContent = senderKm + ' km';
+    // Set slider max to a reasonable range beyond sender activation
+    document.getElementById('slider-fill-km').max = Math.ceil(senderKm * 1.3);
   }
 
   function exitFillUI() {
