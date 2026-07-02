@@ -392,6 +392,35 @@
   }
   .clear-btn:active { border-color: rgba(255,77,77,0.4); color: var(--danger); }
 
+  /* Fill to Full button */
+  .fill-full-btn {
+    -webkit-appearance: none;
+    width: 100%;
+    padding: 13px;
+    background: rgba(77,159,255,0.1);
+    border: 1px solid rgba(77,159,255,0.35);
+    border-radius: 12px;
+    color: #4d9fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s;
+  }
+  .fill-full-btn:active { background: rgba(77,159,255,0.2); }
+  .fill-full-btn svg { width: 16px; height: 16px; }
+
+  .fill-modal-slider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0;
+  }
+
   footer {
     text-align: center; padding: 16px 20px calc(12px + var(--safe-bottom));
     font-size: 11px; color: var(--muted);
@@ -467,6 +496,15 @@
     </div>
   </div>
 
+  <!-- Fill to Full button -->
+  <button class="fill-full-btn" id="fill-full-btn" onclick="openFillModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 22V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 22h10"/>
+      <path d="M13 10h1.5a2 2 0 0 1 2 2v2a1 1 0 0 0 1 1h0a1 1 0 0 0 1-1V9l-3-3"/>
+    </svg>
+    Filled to Full
+  </button>
+
   <!-- Latest trip -->
   <div class="trip-hero" id="trip-hero">
     <div class="trip-hero-label">Latest trip</div>
@@ -512,6 +550,34 @@
   <button class="clear-btn" onclick="clearAll()">Clear all trip history</button>
 
 </main>
+
+<!-- Fill to Full modal -->
+<div class="modal-overlay" id="fill-modal" style="align-items:flex-start; padding-top:60px;">
+  <div class="modal modal-top">
+    <div class="modal-title" style="color:#4d9fff;">⛽ Fill to Full</div>
+    <div class="modal-body">
+      Confirm your tank capacity and adjust the fuel burn rate for this fill. The main app will estimate fuel remaining based on km driven until the sender takes over.
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:10px; padding:12px 14px; margin:4px 0;">
+      <span style="font-size:13px; color:var(--muted);">Total tank capacity</span>
+      <span style="font-family:'Space Mono',monospace; font-size:18px; font-weight:700; color:#4d9fff;" id="fill-modal-cap">120 L</span>
+    </div>
+    <div style="background:var(--surface2); border-radius:10px; padding:12px 14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:13px; color:var(--muted);">Fuel burn rate</span>
+        <span style="font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:#4d9fff;" id="fill-modal-burn-val">12.0 L/100km</span>
+      </div>
+      <div class="fill-modal-slider">
+        <input type="range" id="fill-modal-burn-slider" min="5" max="30" step="0.1" value="12" oninput="updateFillModalBurn()">
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Adjust to match your expected driving conditions for this tank.</div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:4px;">
+      <button class="modal-btn" onclick="closeFillModal()" style="flex:1;">Cancel</button>
+      <button class="modal-btn primary" onclick="confirmFill()" style="flex:1; background:rgba(77,159,255,0.12); border-color:rgba(77,159,255,0.35); color:#4d9fff;">Confirm Fill</button>
+    </div>
+  </div>
+</div>
 
 <!-- Invalid trip modal -->
 <div class="modal-overlay" id="invalid-modal">
@@ -1260,12 +1326,84 @@
     renderFuelPill();
     renderPrevODO();
     renderRefuelArea();
+    renderFillButton();
     renderLatestTrip();
     renderChart();
     renderHistory();
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
+  // ── Fill to Full ──────────────────────────────────────────────────────────
+  function getTotalCap() {
+    const saved = pGet('totalTankCap');
+    return saved ? parseFloat(saved) : 120;
+  }
+
+  window.openFillModal = function() {
+    const totalCap = getTotalCap();
+    const burnRate = parseFloat(pGet('burnRate')) || 12;
+    document.getElementById('fill-modal-cap').textContent = totalCap + ' L';
+    document.getElementById('fill-modal-burn-slider').value = burnRate;
+    document.getElementById('fill-modal-burn-val').textContent = burnRate.toFixed(1) + ' L/100km';
+    document.getElementById('fill-modal').classList.add('show');
+  };
+
+  window.closeFillModal = function() {
+    document.getElementById('fill-modal').classList.remove('show');
+  };
+
+  window.updateFillModalBurn = function() {
+    const val = parseFloat(document.getElementById('fill-modal-burn-slider').value);
+    document.getElementById('fill-modal-burn-val').textContent = val.toFixed(1) + ' L/100km';
+  };
+
+  window.confirmFill = function() {
+    const totalCap = getTotalCap();
+    const burnRate = parseFloat(document.getElementById('fill-modal-burn-slider').value);
+    pSet('fillActive', 'true');
+    pSet('fillCapacity', totalCap);
+    pSet('fillBurnRate', burnRate);
+    pSet('fillKmDriven', '0');
+    closeFillModal();
+
+    // Also log as a refuel event in the HEV entries
+    // Calculate litres added: totalCap minus whatever fuel was in tank
+    const currentFuel = getCurrentFuel();
+    if (currentFuel !== null) {
+      const litresAdded = Math.max(0, totalCap - currentFuel);
+      entries.push({ type: 'refuel', litres: parseFloat(litresAdded.toFixed(2)), ts: new Date().toISOString(), fillToFull: true });
+      save();
+    }
+
+    renderAll();
+
+    // Show confirmation
+    const banner = document.getElementById('economy-updated-banner');
+    banner.textContent = '✓ Fill to Full activated — go to main app to track fuel by km driven.';
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 5000);
+  };
+
+  function renderFillButton() {
+    const btn = document.getElementById('fill-full-btn');
+    const isActive = pGet('fillActive') === 'true';
+    if (isActive) {
+      btn.textContent = '✓ Fill mode active — tracking on main app';
+      btn.style.background = 'rgba(45,255,143,0.1)';
+      btn.style.borderColor = 'rgba(45,255,143,0.35)';
+      btn.style.color = 'var(--accent)';
+      btn.onclick = null;
+      btn.style.cursor = 'default';
+    } else {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 22h10"/><path d="M13 10h1.5a2 2 0 0 1 2 2v2a1 1 0 0 0 1 1h0a1 1 0 0 0 1-1V9l-3-3"/></svg> Filled to Full';
+      btn.style.background = 'rgba(77,159,255,0.1)';
+      btn.style.borderColor = 'rgba(77,159,255,0.35)';
+      btn.style.color = '#4d9fff';
+      btn.onclick = openFillModal;
+      btn.style.cursor = 'pointer';
+    }
+  }
+
   // Show active profile name
   try {
     const profiles = JSON.parse(localStorage.getItem('profiles') || '[]');
