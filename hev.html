@@ -392,6 +392,134 @@
   }
   .clear-btn:active { border-color: rgba(255,77,77,0.4); color: var(--danger); }
 
+  /* Wizard */
+  .wizard-step { display: none; }
+  .wizard-step.active { display: block; }
+
+  .wizard-steps-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .wizard-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .wizard-dot.active { background: #4d9fff; }
+  .wizard-dot.done { background: var(--accent); }
+
+  .wizard-step-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4d9fff;
+    margin-bottom: 12px;
+  }
+
+  .wizard-field {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+
+  .wizard-field-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .wizard-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 10px;
+  }
+
+  .wizard-tab {
+    -webkit-appearance: none;
+    padding: 8px 4px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .wizard-tab.active {
+    background: rgba(77,159,255,0.15);
+    color: #4d9fff;
+  }
+
+  .wizard-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .wizard-input::-webkit-outer-spin-button,
+  .wizard-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .wizard-input:focus { border-color: rgba(77,159,255,0.5); }
+
+  .wizard-preview {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .wizard-preview strong { color: var(--accent); font-family: 'Space Mono', monospace; }
+
+  .wizard-summary {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wizard-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .wizard-summary-row .label { color: var(--muted); }
+  .wizard-summary-row .value { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--text); }
+  .wizard-summary-row .value.accent { color: var(--accent); }
+  .wizard-summary-row .value.blue { color: #4d9fff; }
+
+  .wizard-nav {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .wizard-nav .modal-btn { flex: 1; }
+
   /* Fill to Full button */
   .fill-full-btn {
     -webkit-appearance: none;
@@ -439,6 +567,7 @@
     Back
   </a>
   <h1>HEV Trip Data</h1>
+  <div id="hev-fill-badge" style="display:none; align-items:center; gap:5px; background:rgba(77,159,255,0.12); border:1px solid rgba(77,159,255,0.35); border-radius:20px; padding:4px 10px; font-size:10px; color:#4d9fff; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; white-space:nowrap;">⛽ FILL MODE</div>
   <span id="hev-profile-name" style="font-size:11px; color:var(--muted); font-family:'DM Sans',sans-serif; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:5px 10px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
 </header>
 
@@ -496,8 +625,8 @@
     </div>
   </div>
 
-  <!-- Fill to Full button -->
-  <button class="fill-full-btn" id="fill-full-btn" onclick="openFillModal()">
+  <!-- Fill to Full wizard button -->
+  <button class="fill-full-btn" id="fill-full-btn" onclick="openFillWizard()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 22V8a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"/><path d="M3 22h10"/>
       <path d="M13 10h1.5a2 2 0 0 1 2 2v2a1 1 0 0 0 1 1h0a1 1 0 0 0 1-1V9l-3-3"/>
@@ -551,40 +680,97 @@
 
 </main>
 
-<!-- Fill to Full modal -->
-<div class="modal-overlay" id="fill-modal" style="align-items:flex-start; padding-top:60px;">
-  <div class="modal modal-top">
+<!-- Fill to Full wizard -->
+<div class="modal-overlay" id="fill-wizard" style="align-items:flex-start; padding-top:40px;">
+  <div class="modal modal-top" style="max-width:440px;">
     <div class="modal-title" style="color:#4d9fff;">⛽ Fill to Full</div>
-    <div class="modal-body">
-      Confirm your tank capacity and adjust the fuel burn rate for this fill. The main app will estimate fuel remaining based on km driven until the sender takes over.
+
+    <!-- Step indicators -->
+    <div class="wizard-steps-indicator">
+      <div class="wizard-dot active" id="wdot-1"></div>
+      <div class="wizard-dot" id="wdot-2"></div>
+      <div class="wizard-dot" id="wdot-3"></div>
     </div>
-    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:10px; padding:12px 14px; margin:4px 0;">
-      <span style="font-size:13px; color:var(--muted);">Total tank capacity</span>
-      <span style="font-family:'Space Mono',monospace; font-size:18px; font-weight:700; color:#4d9fff;" id="fill-modal-cap">120 L</span>
-    </div>
-    <div style="background:var(--surface2); border-radius:10px; padding:12px 14px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <span style="font-size:13px; color:var(--muted);">Fuel burn rate</span>
-        <span style="font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:#4d9fff;" id="fill-modal-burn-val">12.0 L/100km</span>
+
+    <!-- Step 1: Pre-fill fuel reading -->
+    <div class="wizard-step active" id="wstep-1">
+      <div class="wizard-step-label">Step 1 of 3 — Current fuel level</div>
+      <div class="modal-body" style="margin-bottom:10px;">What does your car show <strong>right now, before you fill up?</strong></div>
+
+      <div class="wizard-tabs">
+        <button class="wizard-tab active" id="wtab-km" onclick="setWizardTab('km')">Dashboard km</button>
+        <button class="wizard-tab" id="wtab-byd" onclick="setWizardTab('byd')">BYD App %</button>
       </div>
-      <div class="fill-modal-slider">
-        <input type="range" id="fill-modal-burn-slider" min="5" max="30" step="0.1" value="12" oninput="updateFillModalBurn()">
+
+      <div class="wizard-field">
+        <div class="wizard-field-label" id="wfield-label">Dashboard km range</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input class="wizard-input" type="number" id="wizard-fuel-input" min="0" max="1200" placeholder="0" oninput="updateWizardPreview()">
+          <span style="font-family:'Space Mono',monospace; font-size:13px; color:var(--muted);" id="wfield-unit">km</span>
+        </div>
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:4px;">Adjust to match your expected driving conditions for this tank.</div>
-    </div>
-    <div style="background:var(--surface2); border-radius:10px; padding:12px 14px;">
-      <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Current HEV Odometer reading</div>
-      <div style="display:flex; align-items:center; background:var(--bg); border-radius:8px; border:1px solid rgba(77,159,255,0.35); overflow:hidden;">
-        <input type="number" id="fill-odo-input" min="0" max="999999" step="1" placeholder="0"
-          style="flex:1; background:transparent; border:none; outline:none; text-align:center; font-family:'Space Mono',monospace; font-size:22px; font-weight:700; color:var(--text); padding:10px 4px; -moz-appearance:textfield;">
-        <span style="padding-right:14px; font-size:13px; color:var(--muted); font-family:'Space Mono',monospace;">km</span>
+
+      <div class="wizard-preview" id="wizard-fuel-preview">
+        Enter your reading to see the calculated fuel level.
       </div>
-      <div style="font-size:11px; color:var(--muted); margin-top:6px;">Enter your HEV Odometer reading at the time of this fill-up. This is used to calculate km driven on the main page.</div>
+
+      <div class="wizard-nav">
+        <button class="modal-btn" onclick="closeWizard()">Cancel</button>
+        <button class="modal-btn primary" style="background:rgba(77,159,255,0.12); border-color:rgba(77,159,255,0.35); color:#4d9fff;" onclick="wizardNext(2)">Next</button>
+      </div>
     </div>
-    <div style="display:flex; gap:10px; margin-top:4px;">
-      <button class="modal-btn" onclick="closeFillModal()" style="flex:1;">Cancel</button>
-      <button class="modal-btn primary" onclick="confirmFill()" style="flex:1; background:rgba(77,159,255,0.12); border-color:rgba(77,159,255,0.35); color:#4d9fff;">Confirm Fill</button>
+
+    <!-- Step 2: HEV Odometer -->
+    <div class="wizard-step" id="wstep-2">
+      <div class="wizard-step-label">Step 2 of 3 — HEV Odometer</div>
+      <div class="modal-body" style="margin-bottom:10px;">Enter your current HEV Odometer reading. This ends your current trip and records the fuel economy.</div>
+
+      <div class="wizard-field">
+        <div class="wizard-field-label">Current HEV Odometer</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input class="wizard-input" type="number" id="wizard-odo-input" min="0" max="999999" placeholder="0" oninput="updateWizardTripPreview()">
+          <span style="font-family:'Space Mono',monospace; font-size:13px; color:var(--muted);">km</span>
+        </div>
+      </div>
+
+      <div class="wizard-preview" id="wizard-trip-preview">
+        Enter your HEV Odometer to see the trip summary.
+      </div>
+
+      <div class="wizard-nav">
+        <button class="modal-btn" onclick="wizardBack(1)">Back</button>
+        <button class="modal-btn primary" style="background:rgba(77,159,255,0.12); border-color:rgba(77,159,255,0.35); color:#4d9fff;" onclick="wizardNext(3)">Next</button>
+      </div>
     </div>
+
+    <!-- Step 3: Confirm burn rate & summary -->
+    <div class="wizard-step" id="wstep-3">
+      <div class="wizard-step-label">Step 3 of 3 — Confirm &amp; fill</div>
+      <div class="modal-body" style="margin-bottom:10px;">Review the summary below. Adjust the burn rate for the fill mode estimation if needed.</div>
+
+      <div class="wizard-field">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div class="wizard-field-label" style="margin:0;">Fuel burn rate</div>
+          <span style="font-family:'Space Mono',monospace; font-size:15px; font-weight:700; color:#4d9fff;" id="wizard-burn-val">12.0</span>
+        </div>
+        <div class="fill-modal-slider">
+          <input type="range" id="wizard-burn-slider" min="5" max="30" step="0.1" value="12" oninput="updateWizardBurn()">
+        </div>
+        <div style="font-size:11px; color:var(--muted); margin-top:4px;">L/100km — adjust for your expected driving conditions.</div>
+      </div>
+
+      <div class="wizard-summary" id="wizard-summary"></div>
+
+      <div style="font-size:11px; color:var(--muted); line-height:1.6; margin-bottom:6px;">
+        Tapping <strong>Confirm Fill</strong> will end your current trip, log the refuel, and activate fill mode on the main page.
+      </div>
+
+      <div class="wizard-nav">
+        <button class="modal-btn" onclick="wizardBack(2)">Back</button>
+        <button class="modal-btn primary" style="background:rgba(45,255,143,0.12); border-color:rgba(45,255,143,0.35); color:var(--accent);" onclick="confirmWizard()">Confirm Fill</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1349,72 +1535,182 @@
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
-  // ── Fill to Full ──────────────────────────────────────────────────────────
+  // ── Fill to Full Wizard ──────────────────────────────────────────────────
   function getTotalCap() {
     const saved = pGet('totalTankCap');
     return saved ? parseFloat(saved) : 120;
   }
 
-  window.openFillModal = function() {
-    const totalCap = getTotalCap();
-    const burnRate = parseFloat(pGet('burnRate')) || 12;
-    document.getElementById('fill-modal-cap').textContent = totalCap + ' L';
-    document.getElementById('fill-modal-burn-slider').value = burnRate;
-    document.getElementById('fill-modal-burn-val').textContent = burnRate.toFixed(1) + ' L/100km';
-    // Pre-fill ODO from last HEV entry if available
+  let wizardTab = 'km';
+  let wizardLitres = null;
+
+  window.openFillWizard = function() {
+    wizardTab = 'km';
+    wizardLitres = null;
+    document.getElementById('wizard-fuel-input').value = '';
+    document.getElementById('wizard-fuel-preview').innerHTML = 'Enter your reading to see the calculated fuel level.';
     const lastODO = lastODOEntry();
-    document.getElementById('fill-odo-input').value = lastODO ? lastODO.odo : '';
-    document.getElementById('fill-modal').classList.add('show');
-    setTimeout(() => document.getElementById('fill-odo-input').focus(), 300);
+    document.getElementById('wizard-odo-input').value = lastODO ? lastODO.odo : '';
+    document.getElementById('wizard-trip-preview').innerHTML = 'Enter your HEV Odometer to see the trip summary.';
+    const burnRate = parseFloat(pGet('burnRate')) || 12;
+    document.getElementById('wizard-burn-slider').value = burnRate;
+    document.getElementById('wizard-burn-val').textContent = burnRate.toFixed(1);
+    setWizardTab('km');
+    showWizardStep(1);
+    document.getElementById('fill-wizard').classList.add('show');
+    setTimeout(() => document.getElementById('wizard-fuel-input').focus(), 300);
   };
 
-  window.closeFillModal = function() {
-    document.getElementById('fill-modal').classList.remove('show');
+  window.closeWizard = function() {
+    document.getElementById('fill-wizard').classList.remove('show');
   };
 
-  window.updateFillModalBurn = function() {
-    const val = parseFloat(document.getElementById('fill-modal-burn-slider').value);
-    document.getElementById('fill-modal-burn-val').textContent = val.toFixed(1) + ' L/100km';
-  };
-
-  window.confirmFill = function() {
-    const odoInput = document.getElementById('fill-odo-input');
-    const odo = parseFloat(odoInput.value);
-    if (isNaN(odo) || odo <= 0) {
-      odoInput.style.borderColor = 'var(--danger)';
-      setTimeout(() => odoInput.style.borderColor = 'rgba(77,159,255,0.35)', 1500);
-      return;
+  function showWizardStep(step) {
+    [1,2,3].forEach(s => {
+      document.getElementById('wstep-' + s).classList.toggle('active', s === step);
+      const dot = document.getElementById('wdot-' + s);
+      dot.classList.toggle('active', s === step);
+      dot.classList.toggle('done', s < step);
+    });
+    if (step === 2) {
+      updateWizardTripPreview();
+      setTimeout(() => document.getElementById('wizard-odo-input').focus(), 200);
     }
+    if (step === 3) updateWizardSummary();
+  }
+
+  window.wizardNext = function(step) {
+    if (step === 2) {
+      const val = parseFloat(document.getElementById('wizard-fuel-input').value);
+      if (isNaN(val) || val <= 0) {
+        document.getElementById('wizard-fuel-input').style.borderColor = 'var(--danger)';
+        setTimeout(() => document.getElementById('wizard-fuel-input').style.borderColor = '', 1500);
+        return;
+      }
+    }
+    if (step === 3) {
+      const odo = parseFloat(document.getElementById('wizard-odo-input').value);
+      const last = lastODOEntry();
+      if (isNaN(odo) || odo <= 0) {
+        document.getElementById('wizard-odo-input').style.borderColor = 'var(--danger)';
+        setTimeout(() => document.getElementById('wizard-odo-input').style.borderColor = '', 1500);
+        return;
+      }
+      if (last && odo <= last.odo) {
+        alert('HEV Odometer must be greater than the previous reading (' + last.odo.toLocaleString() + ' km).');
+        return;
+      }
+    }
+    showWizardStep(step);
+  };
+
+  window.wizardBack = function(step) { showWizardStep(step); };
+
+  window.setWizardTab = function(tab) {
+    wizardTab = tab;
+    document.getElementById('wtab-km').classList.toggle('active', tab === 'km');
+    document.getElementById('wtab-byd').classList.toggle('active', tab === 'byd');
+    document.getElementById('wfield-label').textContent = tab === 'km' ? 'Dashboard km range' : 'BYD App %';
+    document.getElementById('wfield-unit').textContent = tab === 'km' ? 'km' : '%';
+    document.getElementById('wizard-fuel-input').max = tab === 'km' ? 1200 : 100;
+    document.getElementById('wizard-fuel-input').value = '';
+    document.getElementById('wizard-fuel-preview').innerHTML = 'Enter your reading to see the calculated fuel level.';
+    wizardLitres = null;
+  };
+
+  window.updateWizardPreview = function() {
+    const val = parseFloat(document.getElementById('wizard-fuel-input').value);
+    const preview = document.getElementById('wizard-fuel-preview');
+    if (isNaN(val)) { preview.innerHTML = 'Enter your reading to see the calculated fuel level.'; wizardLitres = null; return; }
+    const FIXED = [10,20,30,40,50,60,70,80];
+    const DKM = [0,106,106,276,276,475,581,699];
+    const DBYD = [0,12,12,38,38,68,83,99];
+    function bld(r,l){const m=new Map();r.forEach((v,i)=>{if(!m.has(v))m.set(v,[]);m.get(v).push(l[i]);});const p=[];m.forEach((ls,v)=>p.push([v,ls.reduce((a,b)=>a+b,0)/ls.length]));return p.sort((a,b)=>a[0]-b[0]);}
+    function inp(v,t){if(v<=t[0][0]){const[x0,y0]=t[0],[x1,y1]=t[1];return x1!==x0?y0+(v-x0)/(x1-x0)*(y1-y0):y0;}if(v>=t[t.length-1][0]){const[x1,y1]=t[t.length-1];let x0=x1,y0=y1;for(let i=t.length-2;i>=0;i--){if(t[i][0]!==x1){[x0,y0]=t[i];break;}}return y1+((y1-y0)/(x1-x0))*(v-x1);}for(let i=0;i<t.length-1;i++){const[x0,y0]=t[i],[x1,y1]=t[i+1];if(v>=x0&&v<=x1)return y0+(v-x0)/(x1-x0)*(y1-y0);}return t[t.length-1][1];}
+    const skm=pGet('calKMreadings'),sbyd=pGet('calBYDreadings');
+    const kt=bld(skm?JSON.parse(skm):DKM,FIXED),bt=bld(sbyd?JSON.parse(sbyd):DBYD,FIXED);
+    wizardLitres = wizardTab === 'byd' ? inp(val, bt) : inp(val, kt);
+    preview.innerHTML = 'Current fuel level: <strong>' + wizardLitres.toFixed(1) + ' L</strong>';
+  };
+
+  window.updateWizardTripPreview = function() {
+    const odo = parseFloat(document.getElementById('wizard-odo-input').value);
+    const preview = document.getElementById('wizard-trip-preview');
+    const last = lastODOEntry();
+    if (!last) { preview.innerHTML = 'This will be your first HEV Odometer entry.'; return; }
+    if (isNaN(odo)) { preview.innerHTML = 'Enter your HEV Odometer to see the trip summary.'; return; }
+    if (odo <= last.odo) { preview.innerHTML = '<span style="color:var(--danger);">Must be greater than previous (' + last.odo.toLocaleString() + ' km).</span>'; return; }
+    if (wizardLitres === null) { preview.innerHTML = 'Enter your fuel reading in Step 1 first.'; return; }
+    const dist = odo - last.odo;
+    const refuelTotal = refuelSinceLastODO();
+    const fuelUsed = last.fuel - wizardLitres + refuelTotal;
+    const economy = dist > 0 && fuelUsed > 0 ? (fuelUsed / dist) * 100 : null;
+    preview.innerHTML =
+      'Distance: <strong>' + dist.toFixed(0) + ' km</strong><br>' +
+      'Fuel used: <strong>' + (fuelUsed > 0 ? fuelUsed.toFixed(1) + ' L' : '\u2014') + '</strong><br>' +
+      'Economy: <strong>' + (economy !== null ? economy.toFixed(1) + ' L/100km' : '\u2014') + '</strong>';
+  };
+
+  window.updateWizardBurn = function() {
+    const val = parseFloat(document.getElementById('wizard-burn-slider').value);
+    document.getElementById('wizard-burn-val').textContent = val.toFixed(1);
+    updateWizardSummary();
+  };
+
+  function updateWizardSummary() {
     const totalCap = getTotalCap();
-    const burnRate = parseFloat(document.getElementById('fill-modal-burn-slider').value);
+    const burnRate = parseFloat(document.getElementById('wizard-burn-slider').value);
+    const odo = parseFloat(document.getElementById('wizard-odo-input').value);
+    const litresAdded = wizardLitres !== null ? Math.max(0, totalCap - wizardLitres) : 0;
+    const senderKm = wizardLitres !== null ? Math.round((totalCap - 80) / burnRate * 100) : 0;
+    const last = lastODOEntry();
+    const dist = last ? odo - last.odo : 0;
+    const refuelTotal = refuelSinceLastODO();
+    const fuelUsed = last ? last.fuel - wizardLitres + refuelTotal : 0;
+    const economy = dist > 0 && fuelUsed > 0 ? (fuelUsed / dist) * 100 : null;
+    document.getElementById('wizard-summary').innerHTML =
+      '<div class="wizard-summary-row"><span class="label">Pre-fill fuel</span><span class="value">' + (wizardLitres !== null ? wizardLitres.toFixed(1) + ' L' : '\u2014') + '</span></div>' +
+      '<div class="wizard-summary-row"><span class="label">Trip distance</span><span class="value accent">' + (dist > 0 ? dist.toFixed(0) + ' km' : '\u2014') + '</span></div>' +
+      '<div class="wizard-summary-row"><span class="label">Trip economy</span><span class="value accent">' + (economy !== null ? economy.toFixed(1) + ' L/100km' : '\u2014') + '</span></div>' +
+      '<div style="border-top:1px solid var(--border); margin:4px 0;"></div>' +
+      '<div class="wizard-summary-row"><span class="label">Tank filled to</span><span class="value blue">' + totalCap + ' L</span></div>' +
+      '<div class="wizard-summary-row"><span class="label">Refuel amount</span><span class="value blue">' + litresAdded.toFixed(1) + ' L</span></div>' +
+      '<div class="wizard-summary-row"><span class="label">Fill burn rate</span><span class="value blue">' + burnRate.toFixed(1) + ' L/100km</span></div>' +
+      '<div class="wizard-summary-row"><span class="label">Sender activates at</span><span class="value blue">~' + senderKm + ' km</span></div>';
+  }
+
+  window.confirmWizard = function() {
+    const odo = parseFloat(document.getElementById('wizard-odo-input').value);
+    const totalCap = getTotalCap();
+    const burnRate = parseFloat(document.getElementById('wizard-burn-slider').value);
+    if (wizardLitres === null || isNaN(odo)) return;
+    // 1. End current trip
+    finaliseODO(odo, wizardLitres);
+    // 2. Log refuel event
+    const litresAdded = Math.max(0, totalCap - wizardLitres);
+    entries.push({ type: 'refuel', litres: parseFloat(litresAdded.toFixed(2)), ts: new Date().toISOString(), fillToFull: true });
+    save();
+    // 3. Activate fill mode
     pSet('fillActive', 'true');
     pSet('fillCapacity', totalCap);
     pSet('fillBurnRate', burnRate);
     pSet('fillKmDriven', '0');
     pSet('fillOdo', odo);
-    closeFillModal();
-
-    // Also log as a refuel event in the HEV entries
-    // Calculate litres added: totalCap minus whatever fuel was in tank
-    const currentFuel = getCurrentFuel();
-    if (currentFuel !== null) {
-      const litresAdded = Math.max(0, totalCap - currentFuel);
-      entries.push({ type: 'refuel', litres: parseFloat(litresAdded.toFixed(2)), ts: new Date().toISOString(), fillToFull: true });
-      save();
-    }
-
+    // 4. Close wizard
+    closeWizard();
     renderAll();
-
-    // Show confirmation
+    // 5. Show confirmation
     const banner = document.getElementById('economy-updated-banner');
-    banner.textContent = '✓ Fill to Full activated — go to main app to track fuel by km driven.';
+    banner.textContent = '\u2713 Trip ended, refuel logged, fill mode activated. Go to main app to track fuel by km driven.';
     banner.classList.add('show');
-    setTimeout(() => banner.classList.remove('show'), 5000);
+    setTimeout(() => banner.classList.remove('show'), 6000);
   };
 
   function renderFillButton() {
     const btn = document.getElementById('fill-full-btn');
     const isActive = pGet('fillActive') === 'true';
+    const badge = document.getElementById('hev-fill-badge');
+    badge.style.display = isActive ? 'flex' : 'none';
     if (isActive) {
       btn.textContent = '✓ Fill mode active — tracking on main app';
       btn.style.background = 'rgba(45,255,143,0.1)';
@@ -1427,7 +1723,7 @@
       btn.style.background = 'rgba(77,159,255,0.1)';
       btn.style.borderColor = 'rgba(77,159,255,0.35)';
       btn.style.color = '#4d9fff';
-      btn.onclick = openFillModal;
+      btn.onclick = openFillWizard;
       btn.style.cursor = 'pointer';
     }
   }
