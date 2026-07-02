@@ -446,12 +446,12 @@
 
   <!-- Stale fuel warning -->
   <div class="banner warn" id="stale-warn">
-    ⚠ Your fuel level hasn't changed since the last ODO entry. Update your fuel reading in the main app before submitting.
+    ⚠ Your fuel level hasn't changed since the last HEV Odometer entry. Update your fuel reading in the main app before submitting.
   </div>
 
   <!-- Auto-detected refuel info banner -->
   <div class="banner info" id="refuel-detected-banner">
-    ⛽ Refuel detected — your fuel level is higher than your last entry. Please log the refuel before submitting your ODO.
+    ⛽ Refuel detected — your fuel level is higher than your last entry. Please log the refuel before submitting your HEV Odometer.
   </div>
 
   <!-- Economy written back to main app confirmation -->
@@ -470,7 +470,7 @@
 
   <!-- ODO input -->
   <div class="card">
-    <div class="card-title">HEV Odometer reading</div>
+    <div class="card-title">HEV Odometer Reading</div>
     <div class="input-row">
       <div class="input-wrap">
         <input class="num-input" type="number" id="odo-input" min="0" max="999999" step="1" placeholder="0">
@@ -479,7 +479,7 @@
       <button class="btn accent" onclick="submitODO()">Submit</button>
     </div>
     <div class="prev-odo" id="prev-odo-display" style="display:none">
-      Previous reading: <span id="prev-odo-val">—</span> km
+      Previous HEV Odometer: <span id="prev-odo-val">—</span> km
     </div>
   </div>
 
@@ -525,7 +525,7 @@
         <div class="trip-hero-unit">L/100km</div>
       </div>
       <div>
-        <div class="trip-hero-sublabel">ODO range</div>
+        <div class="trip-hero-sublabel">HEV ODO Range</div>
         <div class="trip-hero-val" id="latest-odo-range" style="font-size:16px; padding-top:4px;">—</div>
         <div class="trip-hero-unit">km</div>
       </div>
@@ -571,6 +571,15 @@
         <input type="range" id="fill-modal-burn-slider" min="5" max="30" step="0.1" value="12" oninput="updateFillModalBurn()">
       </div>
       <div style="font-size:11px; color:var(--muted); margin-top:4px;">Adjust to match your expected driving conditions for this tank.</div>
+    </div>
+    <div style="background:var(--surface2); border-radius:10px; padding:12px 14px;">
+      <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Current HEV Odometer reading</div>
+      <div style="display:flex; align-items:center; background:var(--bg); border-radius:8px; border:1px solid rgba(77,159,255,0.35); overflow:hidden;">
+        <input type="number" id="fill-odo-input" min="0" max="999999" step="1" placeholder="0"
+          style="flex:1; background:transparent; border:none; outline:none; text-align:center; font-family:'Space Mono',monospace; font-size:22px; font-weight:700; color:var(--text); padding:10px 4px; -moz-appearance:textfield;">
+        <span style="padding-right:14px; font-size:13px; color:var(--muted); font-family:'Space Mono',monospace;">km</span>
+      </div>
+      <div style="font-size:11px; color:var(--muted); margin-top:6px;">Enter your HEV Odometer reading at the time of this fill-up. This is used to calculate km driven on the main page.</div>
     </div>
     <div style="display:flex; gap:10px; margin-top:4px;">
       <button class="modal-btn" onclick="closeFillModal()" style="flex:1;">Cancel</button>
@@ -774,7 +783,7 @@
     // Validate greater than previous
     const last = lastODOEntry();
     if (last && odo <= last.odo) {
-      alert('New ODO must be greater than the previous reading (' + last.odo.toLocaleString() + ' km).');
+      alert('New HEV Odometer must be greater than the previous reading (' + last.odo.toLocaleString() + ' km).');
       return;
     }
 
@@ -820,10 +829,10 @@
       // First ever entry — no trip to preview, just confirm start
       pendingPreview = { odo, fuel };
       body.innerHTML = `
-        <div style="margin-bottom:8px;">This will be your <strong>first odometer entry</strong> — it sets the starting point for future trips.</div>
+        <div style="margin-bottom:8px;">This will be your <strong>first HEV Odometer entry</strong> — it sets the starting point for future trips.</div>
         <div class="preview-grid">
           <div class="preview-stat">
-            <div class="preview-stat-label">Starting ODO</div>
+            <div class="preview-stat-label">Starting HEV ODO</div>
             <div class="preview-stat-val accent">${odo.toLocaleString()}</div>
             <div class="preview-stat-unit">km</div>
           </div>
@@ -1202,7 +1211,7 @@
       'Are you sure you want to clear all HEV tracker data?',
       '',
       'This will permanently delete:',
-      '  \u2022 '+odoCount+' odometer entr'+(odoCount===1?'y':'ies'),
+      '  \u2022 '+odoCount+' HEV Odometer entr'+(odoCount===1?'y':'ies'),
       '  \u2022 '+tripCount+' recorded trip'+(tripCount===1?'':'s'),
       '  \u2022 '+refuelCount+' refuel event'+(refuelCount===1?'':'s'),
       '  \u2022 All fuel consumption history',
@@ -1352,7 +1361,11 @@
     document.getElementById('fill-modal-cap').textContent = totalCap + ' L';
     document.getElementById('fill-modal-burn-slider').value = burnRate;
     document.getElementById('fill-modal-burn-val').textContent = burnRate.toFixed(1) + ' L/100km';
+    // Pre-fill ODO from last HEV entry if available
+    const lastODO = lastODOEntry();
+    document.getElementById('fill-odo-input').value = lastODO ? lastODO.odo : '';
     document.getElementById('fill-modal').classList.add('show');
+    setTimeout(() => document.getElementById('fill-odo-input').focus(), 300);
   };
 
   window.closeFillModal = function() {
@@ -1365,12 +1378,20 @@
   };
 
   window.confirmFill = function() {
+    const odoInput = document.getElementById('fill-odo-input');
+    const odo = parseFloat(odoInput.value);
+    if (isNaN(odo) || odo <= 0) {
+      odoInput.style.borderColor = 'var(--danger)';
+      setTimeout(() => odoInput.style.borderColor = 'rgba(77,159,255,0.35)', 1500);
+      return;
+    }
     const totalCap = getTotalCap();
     const burnRate = parseFloat(document.getElementById('fill-modal-burn-slider').value);
     pSet('fillActive', 'true');
     pSet('fillCapacity', totalCap);
     pSet('fillBurnRate', burnRate);
     pSet('fillKmDriven', '0');
+    pSet('fillOdo', odo);
     closeFillModal();
 
     // Also log as a refuel event in the HEV entries

@@ -307,6 +307,16 @@
       <input type="range" id="slider-fill-km" min="0" max="1000" step="1" value="0" oninput="syncFillSlider()">
       <div class="slider-val" id="slval-fill-km" style="color:#4d9fff;">0 km</div>
     </div>
+    <!-- OR: HEV Odometer input (linked to km driven) -->
+    <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
+      <div class="source-badge" style="background:rgba(77,159,255,0.12); color:#4d9fff;">Or enter current HEV Odometer</div>
+      <div class="num-input-wrap" style="border-color:rgba(77,159,255,0.35);">
+        <input class="num-input" type="number" id="val-fill-odo" min="0" max="999999" placeholder="0" oninput="updateFillFromOdo()">
+        <div class="num-unit">km</div>
+      </div>
+      <div id="fill-odo-ref" style="font-size:11px; color:var(--muted); margin-top:6px; text-align:center;"></div>
+    </div>
+
     <div id="fill-sender-info" style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius:8px; padding:8px 12px; margin-top:10px; font-size:11px;">
       <span style="color:var(--muted);">Sender activates at approx.</span>
       <span style="font-family:'Space Mono',monospace; font-weight:700; color:#4d9fff;" id="fill-sender-km">— km</span>
@@ -866,6 +876,11 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').
     document.getElementById('fill-sender-km').textContent = senderKm + ' km';
     // Set slider max to a reasonable range beyond sender activation
     document.getElementById('slider-fill-km').max = Math.ceil(senderKm * 1.3);
+    // Show fill ODO reference
+    const fillOdo = parseFloat(pGet('fillOdo')) || 0;
+    if (fillOdo > 0) {
+      document.getElementById('fill-odo-ref').textContent = 'HEV Odometer at fill: ' + fillOdo.toLocaleString() + ' km';
+    }
   }
 
   function exitFillUI() {
@@ -896,6 +911,21 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').
     const val = document.getElementById('slider-fill-km').value;
     document.getElementById('val-fill-km').value = val;
     document.getElementById('slval-fill-km').textContent = val + ' km';
+    // Sync ODO input
+    const fillOdo = parseFloat(pGet('fillOdo')) || 0;
+    if (fillOdo > 0) {
+      document.getElementById('val-fill-odo').value = fillOdo + parseInt(val);
+    }
+    updateFillMode();
+  };
+
+  window.updateFillFromOdo = function() {
+    const currentOdo = parseFloat(document.getElementById('val-fill-odo').value) || 0;
+    const fillOdo = parseFloat(pGet('fillOdo')) || 0;
+    const kmDriven = Math.max(0, currentOdo - fillOdo);
+    document.getElementById('val-fill-km').value = kmDriven;
+    document.getElementById('slider-fill-km').value = Math.min(kmDriven, parseInt(document.getElementById('slider-fill-km').max));
+    document.getElementById('slval-fill-km').textContent = kmDriven + ' km';
     updateFillMode();
   };
 
@@ -910,7 +940,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').
     pSet('fillKmDriven', km);
 
     // Sync slider
-    document.getElementById('slider-fill-km').value = Math.min(km, 1000);
+    document.getElementById('slider-fill-km').value = Math.min(km, parseInt(document.getElementById('slider-fill-km').max) || 1000);
     document.getElementById('slval-fill-km').textContent = km + ' km';
 
     // Apply to display
