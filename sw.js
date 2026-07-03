@@ -1,4 +1,4 @@
-const CACHE = 'fuel-v1.3.2';
+const CACHE = 'fuel-v1.6';
 const ASSETS = [
   './index.html',
   './manifest.json',
@@ -19,12 +19,13 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Network-first strategy — always try network, fall back to cache if offline
+// Network-first with HTTP cache bypass
+// Always fetches from the actual server, never from browser HTTP cache
+// Falls back to service worker cache only when offline
 self.addEventListener('fetch', e => {
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-store' })
       .then(response => {
-        // Update cache with fresh response
         const clone = response.clone();
         caches.open(CACHE).then(c => c.put(e.request, clone));
         return response;
