@@ -194,9 +194,9 @@
   .share-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 
   /* Profile modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 100; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 100; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .modal-overlay.show { opacity: 1; pointer-events: auto; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px 20px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; transform: translateY(20px); transition: transform 0.25s; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px 20px; width: 100%; max-width: 420px; max-height: calc(100dvh - 40px); overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 16px; transform: translateY(20px); transition: transform 0.25s; flex-shrink: 0; }
   .modal-overlay.show .modal { transform: translateY(0); }
   .modal-title { font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
   .modal-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
