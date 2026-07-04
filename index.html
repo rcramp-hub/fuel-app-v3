@@ -378,6 +378,20 @@
   </div>
 </div>
 
+<!-- Profile modal -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <div class="modal-title">Vehicle Profiles</div>
+    <div class="modal-body">Switch between vehicles or add a new one. Each profile stores its own calibration, fuel data, and HEV trip history.</div>
+    <div class="profile-list" id="profile-list"></div>
+    <div class="profile-add-row">
+      <input class="profile-add-input" id="profile-add-input" type="text" placeholder="New vehicle name..." maxlength="30">
+      <button class="profile-add-btn" onclick="addProfile()">Add</button>
+    </div>
+    <button class="modal-close" onclick="closeProfileModal()">Close</button>
+  </div>
+</div>
+
 <!-- Welcome overlay (first time) -->
 <div class="welcome-overlay" id="welcome-overlay" style="display:none">
   <div class="welcome-card">
