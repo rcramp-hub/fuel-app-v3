@@ -2,6 +2,19 @@
 
 ---
 
+## Version 1.7
+**Date:** July 2026
+
+### Changes
+- **Auto-detected refuel no longer silently ends the current trip.** When you submit an HEV Odometer reading and the app detects an unaccounted fuel increase (a refuel), the refuel prompt now asks what to do with the odometer reading rather than assuming the trip is over:
+  - **End trip & log refuel** — logs the refuel and closes out the current trip at the submitted odometer reading (previous behaviour).
+  - **Log refuel only — keep trip open** — logs the refuel like the standalone refuel button and leaves the current trip running. The odometer value stays in the input so the trip can be ended later.
+- The standalone "Log Refuel" button is unchanged — it still logs a refuel without touching the current trip.
+
+> Note: release notes for versions 1.3–1.6 were not captured in this file; the app version prior to this release was 1.6.
+
+---
+
 ## Version 1.2
 **Date:** June 2026
 

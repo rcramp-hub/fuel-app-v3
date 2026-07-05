@@ -813,9 +813,9 @@
       <input class="modal-input" type="number" id="refuel-input" min="0.1" max="200" step="0.1" placeholder="0.0">
       <div class="modal-unit">L</div>
     </div>
-    <div class="modal-actions">
+    <div class="modal-actions" id="refuel-actions">
       <button class="modal-btn" onclick="closeRefuelModal()">Cancel</button>
-      <button class="modal-btn primary" onclick="confirmRefuel()">Log refuel</button>
+      <button class="modal-btn primary" onclick="confirmRefuel(false)">Log refuel</button>
     </div>
   </div>
 </div>
@@ -1188,12 +1188,23 @@
 
   // ── Refuel modal ───────────────────────────────────────────────────────────
   window.openRefuelModal = function(mode) {
-    const body = document.getElementById('modal-body');
+    const body    = document.getElementById('modal-body');
+    const actions = document.getElementById('refuel-actions');
     if (mode === 'auto') {
-      const last = lastODOEntry();
-      body.innerHTML = 'Your fuel level is <strong>higher</strong> than your last entry — it looks like you\'ve refuelled. Enter how many litres you added so the economy calculation stays accurate.';
+      body.innerHTML = 'Your fuel level is <strong>higher</strong> than your last entry — it looks like you\'ve refuelled. Enter how many litres you added, then choose what to do with the odometer reading you just submitted.';
+      // Auto-detect: user chooses whether to close out the current trip or just log the refuel
+      actions.style.gridTemplateColumns = '1fr';
+      actions.innerHTML =
+        '<button class="modal-btn" style="background:var(--accent-dim); border-color:var(--accent-mid); color:var(--accent);" onclick="confirmRefuel(true)">End trip &amp; log refuel</button>' +
+        '<button class="modal-btn primary" onclick="confirmRefuel(false)">Log refuel only — keep trip open</button>' +
+        '<button class="modal-btn" onclick="closeRefuelModal()">Cancel</button>';
     } else {
       body.innerHTML = 'Enter how many litres you added to the tank at this refuel stop.';
+      // Manual refuel: log only, never touches the current trip
+      actions.style.gridTemplateColumns = '1fr 1fr';
+      actions.innerHTML =
+        '<button class="modal-btn" onclick="closeRefuelModal()">Cancel</button>' +
+        '<button class="modal-btn primary" onclick="confirmRefuel(false)">Log refuel</button>';
     }
     document.getElementById('refuel-input').value = '';
     document.getElementById('refuel-modal').classList.add('show');
@@ -1202,10 +1213,13 @@
 
   window.closeRefuelModal = function() {
     document.getElementById('refuel-modal').classList.remove('show');
-    pendingODO = null;
+    pendingODO  = null;
+    pendingFuel = null;
   };
 
-  window.confirmRefuel = function() {
+  // endTripAfter: true  → log refuel AND commit the pending ODO (ends the current trip)
+  //               false → log refuel only, leave the current trip open (pending ODO discarded)
+  window.confirmRefuel = function(endTripAfter) {
     const litres = parseFloat(document.getElementById('refuel-input').value);
     if (isNaN(litres) || litres <= 0) {
       document.getElementById('refuel-input').style.outline = '2px solid var(--danger)';
@@ -1220,15 +1234,17 @@
     document.getElementById('refuel-modal').classList.remove('show');
     document.getElementById('refuel-detected-banner').classList.remove('show');
 
-    // If we had a pending ODO from auto-detect, commit it now
-    if (pendingODO !== null) {
-      // Use the fuel snapshot captured at submit time — not current value
+    if (endTripAfter && pendingODO !== null) {
+      // Close out the current trip at the submitted odometer reading.
+      // Use the fuel snapshot captured at submit time — not current value.
       commitODO(pendingODO, pendingFuel !== null ? pendingFuel : getCurrentFuel());
-      pendingODO  = null;
-      pendingFuel = null;
     } else {
+      // Log-refuel-only: keep the trip open. The odometer value stays in the
+      // input so the user can end the trip later, but nothing is committed now.
       renderAll();
     }
+    pendingODO  = null;
+    pendingFuel = null;
   };
 
   // ── Calculate trip economy between two ODO entries ─────────────────────────
