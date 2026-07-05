@@ -2,6 +2,31 @@
 
 ---
 
+## Version 1.9
+**Date:** July 2026
+
+### Changes
+- **Removed the tap-to-edit manual override from the hero number.** The old override on the main litre display was display-only, didn't persist, and was ignored by the HEV page — its real jobs are now covered by Fill to Full mode and HEV refuel logging.
+- **New persistent "Manual fuel override" in Settings.** Enter the exact litres in your tank (e.g. from the pump total or a dip test) and tap Apply. Unlike the old one, this override:
+  - **persists** across reloads and is stored per vehicle profile;
+  - **runs through the whole app** — main display, gauge, distance remaining, and the HEV page (refuel detection, trip economy, and the combined fuel readout all honour it);
+  - is cleared by tapping **Clear override** or by moving a fuel slider on the main screen (which resumes calibrated mode);
+  - **supersedes Fill to Full mode** if that was active.
+- A small "✎ manual override active — set in settings" badge shows under the hero number while an override is in effect. On the HEV page the fuel pill shows the override litres with both % and km derived (each marked `~`).
+
+---
+
+## Version 1.8
+**Date:** July 2026
+
+### New Features
+- **Combined fuel readout on the HEV page.** The "Current fuel level" pill now shows the litre figure alongside its equivalent **% and dashboard km range** (e.g. `58.3 L` with `300 km · ~62%` beneath it). This lets the driver cross-reference the app against the instrument cluster, which displays km rather than litres.
+  - The **unit the user actually entered in the main app** (km or %) is echoed exactly, so it matches what they typed / what the cluster shows.
+  - The **other unit is derived** from the litre figure using the same calibration data (including any user overrides) and is prefixed with `~` to indicate it's an estimate. Derived km is rounded to the nearest 5 to reflect the fuel sender's inherent uncertainty.
+  - In Fill-to-Full mode the line reads `100% · full tank`.
+
+---
+
 ## Version 1.7
 **Date:** July 2026
 

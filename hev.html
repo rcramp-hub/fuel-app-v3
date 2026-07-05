@@ -91,6 +91,7 @@
   .fuel-pill-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
   .fuel-pill-val { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--accent); }
   .fuel-pill-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .fuel-pill-sub { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 3px; white-space: nowrap; }
 
   /* Action row */
   .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -598,7 +599,10 @@
       <div class="fuel-pill-label">Current fuel level</div>
       <div class="fuel-pill-note" id="fuel-note">From main app calculation</div>
     </div>
-    <div class="fuel-pill-val" id="fuel-display">— L</div>
+    <div style="text-align:right;">
+      <div class="fuel-pill-val" id="fuel-display">— L</div>
+      <div class="fuel-pill-sub" id="fuel-subdisplay"></div>
+    </div>
   </div>
 
   <!-- ODO input -->
@@ -855,6 +859,12 @@
   // ── Get current fuel from main app ─────────────────────────────────────────
   function getCurrentFuel() {
     try {
+      // A manual litre override (set in the main app settings) is authoritative,
+      // except while Fill to Full mode is active.
+      const ov = pGet('fuelOverrideL');
+      const fill = pGet('fillActive') === 'true';
+      if (!fill && ov !== null && ov !== '' && !isNaN(parseFloat(ov))) return parseFloat(ov);
+
       const val = pGet('fuelVal');
       const tab = pGet('fuelTab') || 'km';
       if (!val) return null;
@@ -930,20 +940,93 @@
     return net < -0.5; // small tolerance for floating point
   }
 
+  // ── Convert a litre figure back into cluster km and BYD % ─────────────────
+  // Inverse of getCurrentFuel: uses the same calibration data (including any user
+  // overrides) but maps litres → dashboard km range and app %, so the driver can
+  // cross-reference the litre figure against what the instrument cluster shows.
+  function litresToReadings(litres) {
+    try {
+      if (litres === null || isNaN(litres)) return null;
+      const FIXED = [10,20,30,40,50,60,70,80];
+      const DKM   = [0,106,106,276,276,475,581,699];
+      const DBYD  = [0,12,12,38,38,68,83,99];
+
+      // Build inverse table [litres, reading]. Duplicate readings (the sender's
+      // blind spots) are averaged to their midpoint litre value, mirroring the
+      // forward table in getCurrentFuel so the two stay consistent.
+      function buildInverse(readings) {
+        const m = new Map();
+        readings.forEach((r,i)=>{ if(!m.has(r)) m.set(r,[]); m.get(r).push(FIXED[i]); });
+        const fwd = [];
+        m.forEach((ls,r)=>fwd.push([r, ls.reduce((a,b)=>a+b,0)/ls.length])); // [reading, litres]
+        return fwd.map(([r,l])=>[l,r]).sort((a,b)=>a[0]-b[0]);                // [litres, reading]
+      }
+
+      function interp(v, t) {
+        if(v<=t[0][0]){const[x0,y0]=t[0],[x1,y1]=t[1];return x1!==x0?y0+(v-x0)/(x1-x0)*(y1-y0):y0;}
+        if(v>=t[t.length-1][0]){const[x1,y1]=t[t.length-1];let x0=x1,y0=y1;for(let i=t.length-2;i>=0;i--){if(t[i][0]!==x1){[x0,y0]=t[i];break;}}return y1+((y1-y0)/(x1-x0))*(v-x1);}
+        for(let i=0;i<t.length-1;i++){const[x0,y0]=t[i],[x1,y1]=t[i+1];if(v>=x0&&v<=x1)return y0+(v-x0)/(x1-x0)*(y1-y0);}
+        return t[t.length-1][1];
+      }
+
+      const skm  = pGet('calKMreadings');
+      const sbyd = pGet('calBYDreadings');
+      const kInv = buildInverse(skm  ? JSON.parse(skm)  : DKM);
+      const bInv = buildInverse(sbyd ? JSON.parse(sbyd) : DBYD);
+
+      let km  = interp(litres, kInv);
+      let pct = interp(litres, bInv);
+      if (km  < 0) km  = 0;
+      if (pct < 0) pct = 0;
+      if (pct > 100) pct = 100;
+      return { km: Math.round(km / 5) * 5, pct: Math.round(pct) };
+    } catch(e) { return null; }
+  }
+
   // ── Render fuel pill ───────────────────────────────────────────────────────
   function renderFuelPill() {
+    const sub = document.getElementById('fuel-subdisplay');
     const fillActive = pGet('fillActive') === 'true';
     if (fillActive) {
       const totalCap = getTotalCap();
       document.getElementById('fuel-display').textContent = totalCap.toFixed(1) + ' L';
       document.getElementById('fuel-note').textContent = 'Fill to Full active — full tank capacity';
+      sub.textContent = '100% · full tank';
       return;
     }
     const fuel = getCurrentFuel();
+    const overrideL = pGet('fuelOverrideL');
+    const isOverride = fuel !== null && overrideL !== null && overrideL !== '' && !isNaN(parseFloat(overrideL));
+
     document.getElementById('fuel-display').textContent = fuel !== null ? fuel.toFixed(1)+' L' : '— L';
-    document.getElementById('fuel-note').textContent    = fuel !== null
-      ? 'From main app — update there first if needed'
-      : 'No fuel reading found — go to main app first';
+    document.getElementById('fuel-note').textContent    = fuel === null
+      ? 'No fuel reading found — go to main app first'
+      : (isOverride ? 'Manual override — set in main app settings' : 'From main app — update there first if needed');
+
+    if (fuel === null) { sub.textContent = ''; return; }
+
+    const derived = litresToReadings(fuel); // { km, pct }
+
+    // With a manual litre override, litres is the entered value — derive both units.
+    if (isOverride) {
+      sub.textContent = derived ? '~' + derived.pct + '% · ~' + derived.km.toLocaleString() + ' km' : '';
+      return;
+    }
+
+    // Otherwise echo the unit the user actually entered in the main app,
+    // and derive only the other unit. '~' marks derived.
+    const tab      = pGet('fuelTab') || 'km';
+    const entered  = parseFloat(pGet('fuelVal'));
+
+    if (tab === 'byd') {
+      const pctPart = isNaN(entered) ? (derived ? '~' + derived.pct + '%' : '') : Math.round(entered) + '%';
+      const kmPart  = derived ? '~' + derived.km.toLocaleString() + ' km' : '';
+      sub.textContent = [pctPart, kmPart].filter(Boolean).join(' · ');
+    } else {
+      const kmPart  = isNaN(entered) ? (derived ? '~' + derived.km.toLocaleString() + ' km' : '') : Math.round(entered).toLocaleString() + ' km';
+      const pctPart = derived ? '~' + derived.pct + '%' : '';
+      sub.textContent = [kmPart, pctPart].filter(Boolean).join(' · ');
+    }
   }
 
   // ── Render prev ODO ────────────────────────────────────────────────────────
