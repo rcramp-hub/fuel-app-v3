@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPS Watch Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background:#111; color:#eee; }
+  h1 { font-size: 18px; margin: 0 0 8px; }
+  button { font-size: 16px; padding: 12px 16px; margin: 4px 0; width: 100%; border:0; border-radius:8px; }
+  #start { background:#264; color:#fff; }
+  #stop  { background:#622; color:#fff; }
+  label { display:block; margin: 8px 0; font-size: 14px; }
+  .stats { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:12px; }
+  .stat { background:#000; padding:10px; border-radius:8px; }
+  .stat .k { font-size:11px; color:#999; text-transform:uppercase; }
+  .stat .v { font-size:20px; font-family:monospace; }
+  .log { white-space: pre-wrap; font-family: monospace; font-size: 12px;
+         background:#000; padding: 12px; border-radius: 8px; margin-top: 12px; max-height:45vh; overflow:auto; }
+  .ok { color:#6f6; } .bad { color:#f66; } .warn { color:#fd6; } .dim { color:#888; }
+</style>
+</head>
+<body>
+<h1>GPS watch diagnostic</h1>
+<div id="support"></div>
+
+<label><input type="checkbox" id="high" checked> Request HIGH accuracy (prefer GNSS)</label>
+<button id="start">Start watching</button>
+<button id="stop">Stop</button>
+
+<div class="stats">
+  <div class="stat"><div class="k">Elapsed</div><div class="v" id="elapsed">—</div></div>
+  <div class="stat"><div class="k">Fixes</div><div class="v" id="count">0</div></div>
+  <div class="stat"><div class="k">Latest accuracy</div><div class="v" id="latest">—</div></div>
+  <div class="stat"><div class="k">Best accuracy</div><div class="v" id="best">—</div></div>
+</div>
+
+<div class="log" id="log">Ready. Press Start and watch the accuracy tighten as the GNSS chip warms up.</div>
+
+<script>
+  var logEl = document.getElementById("log");
+  var watchId = null;
+  var startedAt = 0;
+  var fixCount = 0;
+  var bestAcc = Infinity;
+  var tick = null;
+
+  function line(msg, cls){
+    var span = document.createElement("div");
+    if (cls) span.className = cls;
+    span.textContent = msg;
+    logEl.appendChild(span);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function accClass(a){
+    if (a <= 30) return "ok";
+    if (a <= 500) return "warn";
+    return "bad";
+  }
+
+  // Does the API even exist here?
+  if (!("geolocation" in navigator)) {
+    document.getElementById("support").innerHTML =
+      "<div class=\"bad\">navigator.geolocation is UNDEFINED — this browser has no Geolocation API.</div>";
+  } else {
+    document.getElementById("support").innerHTML =
+      "<div class=\"ok\">navigator.geolocation exists.</div>";
+  }
+
+  if (!window.isSecureContext) {
+    line("WARNING: not a secure context (not HTTPS). Geolocation will likely be blocked.", "warn");
+  }
+
+  function updateElapsed(){
+    if (!startedAt) return;
+    var s = Math.round((Date.now() - startedAt) / 1000);
+    document.getElementById("elapsed").textContent = s + "s";
+  }
+
+  function start(){
+    if (watchId !== null) { line("Already watching.", "dim"); return; }
+    if (!("geolocation" in navigator)) { line("No geolocation API. Cannot watch.", "bad"); return; }
+
+    var high = document.getElementById("high").checked;
+    startedAt = Date.now();
+    fixCount = 0;
+    bestAcc = Infinity;
+    document.getElementById("count").textContent = "0";
+    document.getElementById("latest").textContent = "—";
+    document.getElementById("best").textContent = "—";
+    line("--- watch started, highAccuracy=" + high + " ---", "dim");
+
+    tick = setInterval(updateElapsed, 1000);
+
+    watchId = navigator.geolocation.watchPosition(
+      function(pos){
+        var c = pos.coords;
+        var t = Math.round((Date.now() - startedAt) / 1000);
+        fixCount++;
+        if (c.accuracy < bestAcc) bestAcc = c.accuracy;
+
+        document.getElementById("count").textContent = String(fixCount);
+        var latestEl = document.getElementById("latest");
+        latestEl.textContent = Math.round(c.accuracy) + "m";
+        latestEl.className = "v " + accClass(c.accuracy);
+        var bestEl = document.getElementById("best");
+        bestEl.textContent = Math.round(bestAcc) + "m";
+        bestEl.className = "v " + accClass(bestAcc);
+
+        line("[" + t + "s] #" + fixCount +
+             "  acc=" + Math.round(c.accuracy) + "m" +
+             "  lat=" + c.latitude.toFixed(5) +
+             "  lng=" + c.longitude.toFixed(5) +
+             (c.speed !== null ? "  speed=" + c.speed : ""),
+             accClass(c.accuracy));
+
+        if (fixCount === 1 && c.accuracy > 1000) {
+          line("=> First fix radius >1km: likely IP fallback. Watch whether it tightens.", "warn");
+        }
+      },
+      function(err){
+        var t = Math.round((Date.now() - startedAt) / 1000);
+        var names = {1:"PERMISSION_DENIED", 2:"POSITION_UNAVAILABLE", 3:"TIMEOUT"};
+        line("[" + t + "s] ERROR code " + err.code + " (" + (names[err.code] || "?") + "): " + err.message, "bad");
+      },
+      { enableHighAccuracy: high, timeout: 30000, maximumAge: 0 }
+    );
+  }
+
+  function stop(){
+    if (watchId === null) { line("Not currently watching.", "dim"); return; }
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    if (tick) { clearInterval(tick); tick = null; }
+    var summary = "--- stopped after " + fixCount + " fixes";
+    if (bestAcc !== Infinity) summary += ", best accuracy " + Math.round(bestAcc) + "m";
+    summary += " ---";
+    line(summary, "dim");
+    if (bestAcc <= 30) line("=> Reached a tight GNSS fix. Head-unit GPS path is viable.", "ok");
+    else if (bestAcc !== Infinity && bestAcc > 1000) line("=> Never got below 1km. Likely IP-only, not viable for station tagging.", "bad");
+    else if (bestAcc !== Infinity) line("=> Settled at Wi-Fi/cell range, not true satellite accuracy.", "warn");
+  }
+
+  document.getElementById("start").onclick = start;
+  document.getElementById("stop").onclick = stop;
+</script>
+</body>
+</html>
