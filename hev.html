@@ -317,6 +317,7 @@
   .chart-svg {
     overflow: visible;
     display: block;
+    width: 100%;
   }
 
   /* Latest trip hero */
@@ -1541,15 +1542,22 @@
 
     card.classList.add('show');
 
-    // Fixed-width bar dimensions
-    const barW     = 26;
+    // Bar dimensions — bars scale to fill the available width, capped so that
+    // a couple of trips don't render as oversized blocks. When capped (few
+    // trips), the group is centred.
     const gap      = 6;
+    const maxBarW  = 60;
     const padTop   = 28;
     const padBot   = 22;
     const H        = 140;
     const barArea  = H - padTop - padBot;
     const n        = trips.length;
-    const W        = n * barW + (n - 1) * gap;
+    const availW   = Math.max(240, svg.clientWidth || (svg.parentElement ? svg.parentElement.clientWidth - 32 : 0) || 300);
+    let   barW     = (availW - (n - 1) * gap) / n;
+    if (barW > maxBarW) barW = maxBarW;
+    const contentW = n * barW + (n - 1) * gap;
+    const offsetX  = Math.max(0, (availW - contentW) / 2);
+    const W        = availW;
     const maxEco   = 25;
     const minEco   = 0;
 
@@ -1579,7 +1587,7 @@
     svgContent += '<line x1="0" y1="' + (padTop + barArea/2) + '" x2="' + W + '" y2="' + (padTop + barArea/2) + '" stroke="rgba(255,255,255,0.04)" stroke-width="1" stroke-dasharray="3,3"/>';
 
     trips.forEach((trip, i) => {
-      const x       = i * (barW + gap);
+      const x       = offsetX + i * (barW + gap);
       const valid   = trip.economy !== null && trip.economy > 0;
       const isFirst = i === 0;
 
@@ -1620,7 +1628,7 @@
     });
 
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-    svg.setAttribute('width', W);
+    svg.removeAttribute('width');
     svg.innerHTML = svgContent;
   }
 
@@ -1836,6 +1844,18 @@
     const active = profiles.find(p => p.id === activeId);
     if (active) document.getElementById('hev-profile-name').textContent = active.name;
   } catch(e) {}
+
+  // Re-render the economy chart on width change (resize / rotate) so the bars
+  // re-fit the new width. Debounced to avoid thrashing during a drag-resize.
+  let _chartResizeTimer = null;
+  function onViewportResize() {
+    clearTimeout(_chartResizeTimer);
+    _chartResizeTimer = setTimeout(() => {
+      if (document.getElementById('chart-card').classList.contains('show')) renderChart();
+    }, 150);
+  }
+  window.addEventListener('resize', onViewportResize);
+  window.addEventListener('orientationchange', onViewportResize);
 
   load();
   renderAll();

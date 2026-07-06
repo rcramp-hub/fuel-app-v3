@@ -2,6 +2,22 @@
 
 ---
 
+## Version 1.12
+**Date:** July 2026
+
+### Improvements
+- **Economy chart now re-fits on screen resize / rotation.** The chart re-renders its bars to the new width when the window resizes or the phone rotates, so it stays filled correctly rather than only fitting the width it had when the page first loaded. The handler is debounced and only runs while the chart is visible.
+
+---
+
+## Version 1.11
+**Date:** July 2026
+
+### Improvements
+- **Economy chart bars now scale to fill the width.** Previously the bars were a fixed 26px, so with only a few trips the chart left large empty space and looked sparse. Bar width is now calculated from the available width so the chart fills the card. With roughly 5+ trips the bars span the full width; with fewer trips they're capped at a sensible maximum and the group is centred, rather than clustered thin on one side.
+
+---
+
 ## Version 1.10
 **Date:** July 2026
 
