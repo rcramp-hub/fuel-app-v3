@@ -380,6 +380,8 @@
     padding-top: 8px; border-top: 1px solid var(--border); margin-top: 10px;
     display: flex; justify-content: space-between; align-items: center;
   }
+  .trip-ref { display:inline-block; font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:1px 5px; margin-right:7px; letter-spacing:0.02em; vertical-align:middle; }
+  .trip-ref.latest { color:var(--blue); border-color:var(--blue-mid); }
 
   .delete-btn {
     -webkit-appearance: none; background: transparent; border: none;
@@ -1422,11 +1424,12 @@
     entries.forEach((e,i) => { if (e.type==='odo') odoIndices.push(i); });
 
     // Build trips
+    let tripPos = 0;
     for (let t = odoIndices.length-1; t >= 1; t--) {
       const fromI = odoIndices[t-1];
       const toI   = odoIndices[t];
       const trip  = calcTrip(fromI, toI);
-      items.push({ kind:'trip', entry: entries[toI], prev: entries[fromI], trip, index: toI, isLatest: t===odoIndices.length-1 });
+      items.push({ kind:'trip', entry: entries[toI], prev: entries[fromI], trip, index: toI, isLatest: t===odoIndices.length-1, tripPos: tripPos++ });
     }
 
     // Also show refuels that came before first ODO or are interspersed (not already shown in trip context)
@@ -1444,8 +1447,11 @@
     list.innerHTML = items.map(item => {
       if (item.kind === 'trip') {
         const d    = new Date(item.entry.ts);
-        const date = d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        const date = d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
         const refuelNote = item.trip.refuelTotal > 0 ? ` <span style="color:var(--purple);font-size:10px;">incl. ${item.trip.refuelTotal.toFixed(1)}L refuel</span>` : '';
+        // Reference tag mirroring the economy chart (only the last 10 trips appear there)
+        const refLabel = item.tripPos < 10 ? (item.tripPos === 0 ? 'Latest' : 'T-' + item.tripPos) : '';
+        const refChip  = refLabel ? `<span class="trip-ref ${item.isLatest?'latest':''}">${refLabel}</span>` : '';
         return `
           <div class="history-item ${item.isLatest?'latest':''}">
             <div class="history-item-grid">
@@ -1455,14 +1461,14 @@
               <div><div class="h-stat-label">Refuel added</div><div class="h-stat-val" style="${item.trip.refuelTotal>0?'color:var(--purple)':''}">${item.trip.refuelTotal>0?item.trip.refuelTotal.toFixed(1)+' L':'—'}</div></div>
             </div>
             <div class="history-date">
-              <span>${date}${item.isLatest?' · Latest':''}</span>
+              <span>${refChip}${date}</span>
               <button class="delete-btn" onclick="deleteEntry(${item.index})">✕ Remove</button>
             </div>
           </div>`;
       }
       if (item.kind === 'refuel') {
         const d    = new Date(item.entry.ts);
-        const date = d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        const date = d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
         return `
           <div class="history-item refuel">
             <div class="refuel-row">

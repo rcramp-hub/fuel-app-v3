@@ -2,6 +2,15 @@
 
 ---
 
+## Version 1.10
+**Date:** July 2026
+
+### Improvements
+- **Trip reference tags in the history log.** Each trip in the history list now carries the same reference as the economy chart (`Latest`, `T-1`, `T-2` …) as a small tag next to its date, so a bar on the chart can be matched to its row below at a glance. The tag is shown only for the trips that appear on the chart (the most recent 10); the date remains the primary identifier. The latest trip's tag is highlighted in blue to match its row.
+- **Full weekday name on timestamps.** Trip and refuel entries in the history log now show the full day name with each timestamp (e.g. "Monday, 6 Jan 2026, 2:32 pm").
+
+---
+
 ## Version 1.9
 **Date:** July 2026
 
