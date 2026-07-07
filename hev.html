@@ -189,6 +189,10 @@
   .modal-unit { padding-right: 14px; font-size: 13px; color: var(--muted); font-family: 'Space Mono', monospace; }
 
   .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .geo-row { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .geo-status { flex: 1; font-size: 12px; color: var(--muted); }
+  .geo-skip-btn { -webkit-appearance: none; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: inherit; font-size: 12px; padding: 6px 12px; cursor: pointer; }
+  .geo-skip-btn:active { border-color: var(--warn-mid); color: var(--warn); }
   .modal-btn {
     -webkit-appearance: none; padding: 12px;
     border-radius: 10px; font-family: 'DM Sans', sans-serif;
@@ -776,6 +780,7 @@
         Tapping <strong>Confirm Fill</strong> will end your current trip, log the refuel, and activate fill mode on the main page.
       </div>
 
+      <div class="geo-row" style="display:none;"><span class="geo-status">📍</span><button class="geo-skip-btn" onclick="geoSkipOnce()">Skip</button></div>
       <div class="wizard-nav">
         <button class="modal-btn" onclick="wizardBack(2)">Back</button>
         <button class="modal-btn primary" style="background:rgba(45,255,143,0.12); border-color:rgba(45,255,143,0.35); color:var(--accent);" onclick="confirmWizard()">Confirm Fill</button>
@@ -802,6 +807,7 @@
   <div class="modal modal-top">
     <div class="modal-title" style="color:var(--blue);">Trip Preview</div>
     <div class="modal-body" id="preview-body" style="padding:0;"></div>
+    <div class="geo-row" style="display:none;"><span class="geo-status">📍</span><button class="geo-skip-btn" onclick="geoSkipOnce()">Skip</button></div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="cancelPreview()">Cancel</button>
       <button class="modal-btn" style="background:var(--accent-dim); border-color:var(--accent-mid); color:var(--accent);" onclick="endTrip()">End Trip</button>
@@ -820,6 +826,7 @@
       <input class="modal-input" type="number" id="refuel-input" min="0.1" max="200" step="0.1" placeholder="0.0">
       <div class="modal-unit">L</div>
     </div>
+    <div class="geo-row" style="display:none;"><span class="geo-status">📍</span><button class="geo-skip-btn" onclick="geoSkipOnce()">Skip</button></div>
     <div class="modal-actions" id="refuel-actions">
       <button class="modal-btn" onclick="closeRefuelModal()">Cancel</button>
       <button class="modal-btn primary" onclick="confirmRefuel(false)">Log refuel</button>
@@ -857,6 +864,62 @@
 
   function save() {
     try { pSet('hevEntries', JSON.stringify(entries)); } catch(e) {}
+  }
+
+  // ── GPS location stamping (optional) ─────────────────────────
+  // Toggle stored per-profile as 'geoEnabled' (set in the main app settings).
+  // When on, trip-end and refuel events are stamped with a one-shot GPS fix.
+  // Never blocks or delays saving — if no fix arrives the event just saves plain.
+  let _geoPending = null;   // last captured fix for the open summary, or null
+  let _geoSkip    = false;  // one-time skip for the open summary
+  function geoOn() { return pGet('geoEnabled') === '1'; }
+  function geoCapture(cb) {
+    if (!geoOn()) { cb(null, 'disabled'); return; }
+    if (!('geolocation' in navigator)) { cb(null, 'unsupported'); return; }
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        const c = pos.coords;
+        if (c.accuracy == null || c.accuracy > 100) { cb(null, 'weak'); return; }
+        cb({
+          lat: c.latitude,
+          lng: c.longitude,
+          acc: Math.round(c.accuracy * 10) / 10,
+          alt: (c.altitude == null ? null : Math.round(c.altitude)),
+          ts: Date.now()
+        }, 'ok');
+      },
+      function(err) {
+        const m = { 1: 'denied', 2: 'unavailable', 3: 'timeout' };
+        cb(null, m[err.code] || 'error');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  }
+  function geoSetStatus(txt) {
+    document.querySelectorAll('.geo-status').forEach(function(el) { el.textContent = txt; });
+  }
+  function geoBeginCapture() {
+    _geoPending = null;
+    _geoSkip = false;
+    const rows = document.querySelectorAll('.geo-row');
+    if (!geoOn()) { rows.forEach(function(r) { r.style.display = 'none'; }); return; }
+    rows.forEach(function(r) { r.style.display = ''; });
+    geoSetStatus('\uD83D\uDCCD Getting location\u2026');
+    geoCapture(function(loc, why) {
+      _geoPending = loc;
+      if (loc) geoSetStatus('\uD83D\uDCCD Location ready (' + loc.acc + ' m)');
+      else if (why === 'denied') geoSetStatus('\uD83D\uDCCD Permission denied');
+      else if (why === 'weak') geoSetStatus('\uD83D\uDCCD Signal too weak to stamp');
+      else geoSetStatus('\uD83D\uDCCD Location unavailable');
+    });
+  }
+  window.geoSkipOnce = function() {
+    _geoSkip = true;
+    geoSetStatus('\uD83D\uDCCD Skipped for this entry');
+  };
+  function geoAttach(entry) {
+    if (geoOn() && !_geoSkip && _geoPending) entry.loc = _geoPending;
+    return entry;
   }
 
   // ── Get current fuel from main app ─────────────────────────────────────────
@@ -1098,6 +1161,7 @@
   let pendingPreview = null; // {odo, fuel} waiting for user to End Trip or Cancel
 
   function showTripPreview(odo, fuel) {
+    geoBeginCapture();
     const prevODOEntries = entries.map((e,i)=>({...e,i})).filter(e=>e.type==='odo');
     const body = document.getElementById('preview-body');
 
@@ -1236,7 +1300,7 @@
   }
 
   function finaliseODO(odo, fuel) {
-    entries.push({ type: 'odo', odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() });
+    entries.push(geoAttach({ type: 'odo', odo, fuel: parseFloat(fuel.toFixed(2)), ts: new Date().toISOString() }));
     save();
     document.getElementById('odo-input').value = '';
 
@@ -1274,6 +1338,7 @@
 
   // ── Refuel modal ───────────────────────────────────────────────────────────
   window.openRefuelModal = function(mode) {
+    geoBeginCapture();
     const body    = document.getElementById('modal-body');
     const actions = document.getElementById('refuel-actions');
     if (mode === 'auto') {
@@ -1314,7 +1379,7 @@
     }
 
     // Log the refuel event
-    entries.push({ type: 'refuel', litres: parseFloat(litres.toFixed(2)), ts: new Date().toISOString() });
+    entries.push(geoAttach({ type: 'refuel', litres: parseFloat(litres.toFixed(2)), ts: new Date().toISOString() }));
     save();
 
     document.getElementById('refuel-modal').classList.remove('show');
@@ -1685,7 +1750,7 @@
       updateWizardTripPreview();
       setTimeout(() => document.getElementById('wizard-odo-input').focus(), 200);
     }
-    if (step === 3) updateWizardSummary();
+    if (step === 3) { updateWizardSummary(); geoBeginCapture(); }
   }
 
   window.wizardNext = function(step) {
@@ -1797,7 +1862,7 @@
     finaliseODO(odo, wizardLitres);
     // 2. Log refuel event
     const litresAdded = Math.max(0, totalCap - wizardLitres);
-    entries.push({ type: 'refuel', litres: parseFloat(litresAdded.toFixed(2)), ts: new Date().toISOString(), fillToFull: true });
+    entries.push(geoAttach({ type: 'refuel', litres: parseFloat(litresAdded.toFixed(2)), ts: new Date().toISOString(), fillToFull: true }));
     save();
     // 3. Activate fill mode
     pSet('fillActive', 'true');

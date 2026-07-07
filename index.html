@@ -365,6 +365,15 @@
   </div>
 
   <div class="settings-section">
+    <div class="settings-section-title">GPS location stamping</div>
+    <div style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+      <span style="font-size:13px; color:var(--muted); flex:1;">Stamp trip-end &amp; refuel events with location</span>
+      <input type="checkbox" id="geo-enabled-input" onchange="setGeoEnabled(this.checked)" style="width:22px; height:22px; accent-color: var(--accent); flex-shrink:0;">
+    </div>
+    <div class="settings-note">When on, ending a trip or logging a refuel records a one-shot GPS location with the event. Your device will ask for location permission the first time. Each summary shows a <strong>Skip</strong> button to leave a single event un-stamped. Off by default.</div>
+  </div>
+
+  <div class="settings-section">
     <div class="validation-msg" id="validation-msg"></div>
     <div class="settings-actions">
       <button class="s-btn" onclick="resetToDefaults()">Reset to defaults</button>
@@ -465,7 +474,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
 
   // Migrate old non-profile data to a new profile (one-time)
   function migrateOldData(profileId) {
-    const oldKeys = ['fuelTab','fuelVal','fuelOverrideL','burnRate','calKMreadings','calBYDreadings','calLastUpdated','hevEntries'];
+    const oldKeys = ['fuelTab','fuelVal','fuelOverrideL','burnRate','calKMreadings','calBYDreadings','calLastUpdated','hevEntries','geoEnabled'];
     oldKeys.forEach(key => {
       const val = localStorage.getItem(key);
       if (val !== null) {
@@ -534,7 +543,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     profiles = profiles.filter(p => p.id !== id);
     saveProfiles(profiles);
     // Remove all data for this profile
-    const keys = ['fuelTab','fuelVal','fuelOverrideL','burnRate','calKMreadings','calBYDreadings','calLastUpdated','hevEntries'];
+    const keys = ['fuelTab','fuelVal','fuelOverrideL','burnRate','calKMreadings','calBYDreadings','calLastUpdated','hevEntries','geoEnabled'];
     keys.forEach(k => { try { localStorage.removeItem('p_' + id + '_' + k); } catch(e) {} });
     // Switch to first remaining profile
     if (profiles.length > 0) {
@@ -799,6 +808,11 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     const clearBtn = document.getElementById('override-clear-btn');
     if (clearBtn) clearBtn.disabled = getFuelOverride() === null;
   }
+  window.setGeoEnabled = function(on) { pSet('geoEnabled', on ? '1' : '0'); };
+  function renderGeoToggle() {
+    const el = document.getElementById('geo-enabled-input');
+    if (el) el.checked = (pGet('geoEnabled') === '1');
+  }
   window.applyFuelOverride = function() {
     const el = document.getElementById('override-cal-input');
     const v  = parseFloat(el.value);
@@ -973,6 +987,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     document.getElementById('total-cap-input').value = getTotalCap();
 
     renderOverrideStatus();
+    renderGeoToggle();
 
     // Check fill mode state
     fillModeActive = false;

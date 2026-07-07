@@ -2,6 +2,20 @@
 
 ---
 
+## Version 1.13
+**Date:** July 2026
+
+### New features
+- **Optional GPS location stamping for fuel events.** When enabled, ending a trip or logging a refuel now records a one-shot GPS location (latitude, longitude, accuracy and altitude) alongside the event. The fix is captured while the confirmation summary is on screen, so there is no added delay, and it is stored inside the entry itself. Works on both the BYD head-unit browser (sub-metre fused fix) and a mounted iPhone.
+- **Enable/disable in Settings.** A new "GPS location stamping" toggle in the main app settings turns the feature on or off. It is **off by default** and is remembered per vehicle profile. Your device asks for location permission the first time an event is stamped.
+- **Per-event Skip button.** Each trip-end and refuel summary shows a Skip button so a single event can be left un-stamped without turning the feature off.
+
+### Notes
+- Location capture never blocks or delays saving. If a fix is unavailable, denied, or too weak (worse than 100 m), the event simply saves without a location.
+- No coordinates leave the device — the location is stored locally with the event, exactly like the rest of your fuel data.
+
+---
+
 ## Version 1.12
 **Date:** July 2026
 
