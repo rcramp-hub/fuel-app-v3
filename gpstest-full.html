@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full GEO Diagnostic</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background:#111; color:#eee; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing:0.5px; color:#8bd; margin: 18px 0 6px; }
+  button { font-size: 16px; padding: 12px 16px; margin: 4px 0; width: 100%; border:0; border-radius:8px; }
+  #start { background:#264; color:#fff; }
+  #stop  { background:#622; color:#fff; }
+  #copy  { background:#345; color:#fff; }
+  label { display:block; margin: 8px 0; font-size: 14px; }
+  table { width:100%; border-collapse: collapse; font-family: monospace; font-size: 13px; }
+  td { padding: 4px 6px; border-bottom: 1px solid #222; vertical-align: top; }
+  td.k { color:#999; width: 42%; word-break: break-word; }
+  td.v { color:#eee; word-break: break-word; }
+  .ok { color:#6f6; } .bad { color:#f66; } .warn { color:#fd6; } .dim { color:#888; }
+  .log { white-space: pre-wrap; font-family: monospace; font-size: 12px;
+         background:#000; padding: 12px; border-radius: 8px; margin-top: 8px; max-height:35vh; overflow:auto; }
+  .card { background:#000; border-radius:8px; padding:4px 10px; }
+</style>
+</head>
+<body>
+<h1>Full GEO diagnostic</h1>
+<div id="secure"></div>
+
+<h2>Environment</h2>
+<div class="card"><table id="env"></table></div>
+
+<h2>Permission</h2>
+<div class="card"><table id="perm"></table></div>
+
+<h2>Network</h2>
+<div class="card"><table id="net"></table></div>
+
+<h2>Position (live)</h2>
+<label><input type="checkbox" id="high" checked> Request HIGH accuracy (prefer GNSS)</label>
+<button id="start">Start watching</button>
+<button id="stop">Stop</button>
+<div class="card"><table id="pos"></table></div>
+
+<h2>Orientation / Compass</h2>
+<button id="orient">Enable orientation sensors</button>
+<div class="card"><table id="ori"></table></div>
+
+<h2>Event log</h2>
+<div class="log" id="log">Ready.</div>
+<button id="copy">Copy full report to clipboard</button>
+
+<script>
+  var logEl = document.getElementById("log");
+  var watchId = null;
+  var startedAt = 0;
+  var fixCount = 0;
+  var bestAcc = Infinity;
+
+  function line(msg, cls){
+    var span = document.createElement("div");
+    if (cls) span.className = cls;
+    span.textContent = msg;
+    logEl.appendChild(span);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // Render a set of key/value rows into a table, replacing prior contents.
+  function render(tableId, rows){
+    var t = document.getElementById(tableId);
+    t.innerHTML = "";
+    for (var i = 0; i < rows.length; i++){
+      var tr = document.createElement("tr");
+      var kd = document.createElement("td");
+      kd.className = "k";
+      kd.textContent = rows[i][0];
+      var vd = document.createElement("td");
+      vd.className = "v" + (rows[i][2] ? " " + rows[i][2] : "");
+      var val = rows[i][1];
+      vd.textContent = (val === undefined || val === null || val === "") ? "—" : String(val);
+      tr.appendChild(kd);
+      tr.appendChild(vd);
+      t.appendChild(tr);
+    }
+  }
+
+  function accClass(a){
+    if (a == null) return "";
+    if (a <= 30) return "ok";
+    if (a <= 500) return "warn";
+    return "bad";
+  }
+
+  // --- Secure context banner ---
+  if (window.isSecureContext) {
+    document.getElementById("secure").innerHTML = "<div class=\"ok\">Secure context (HTTPS) — geolocation permitted.</div>";
+  } else {
+    document.getElementById("secure").innerHTML = "<div class=\"bad\">NOT a secure context — geolocation will likely be blocked. Serve over HTTPS.</div>";
+  }
+
+  // --- Environment ---
+  var nav = navigator;
+  var tz = "";
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { tz = "(unavailable)"; }
+  var langs = "";
+  try { langs = (nav.languages || []).join(", "); } catch (e) { langs = ""; }
+
+  render("env", [
+    ["geolocation API", ("geolocation" in nav) ? "present" : "UNDEFINED", ("geolocation" in nav) ? "ok" : "bad"],
+    ["user agent", nav.userAgent],
+    ["platform", nav.platform],
+    ["vendor", nav.vendor],
+    ["language", nav.language],
+    ["languages", langs],
+    ["timezone (IANA)", tz, "warn"],
+    ["timezone offset (min)", new Date().getTimezoneOffset()],
+    ["hardwareConcurrency", nav.hardwareConcurrency],
+    ["deviceMemory (GB)", nav.deviceMemory],
+    ["online", nav.onLine],
+    ["screen", window.screen.width + " x " + window.screen.height + " @" + (window.devicePixelRatio || 1) + "x"]
+  ]);
+
+  // --- Permission state ---
+  function refreshPerm(){
+    if (!nav.permissions || !nav.permissions.query){
+      render("perm", [["Permissions API", "not supported", "warn"]]);
+      return;
+    }
+    nav.permissions.query({ name: "geolocation" }).then(function(status){
+      render("perm", [
+        ["geolocation permission", status.state, status.state === "granted" ? "ok" : (status.state === "denied" ? "bad" : "warn")]
+      ]);
+      status.onchange = function(){ refreshPerm(); };
+    }).catch(function(err){
+      render("perm", [["Permissions query error", err.message, "bad"]]);
+    });
+  }
+  refreshPerm();
+
+  // --- Network info (Chromium / DiLink likely supports this) ---
+  function refreshNet(){
+    var c = nav.connection || nav.mozConnection || nav.webkitConnection;
+    if (!c){
+      render("net", [["Network Information API", "not supported", "warn"]]);
+      return;
+    }
+    render("net", [
+      ["effectiveType", c.effectiveType],
+      ["type", c.type],
+      ["downlink (Mbps)", c.downlink],
+      ["rtt (ms)", c.rtt],
+      ["saveData", c.saveData]
+    ]);
+  }
+  refreshNet();
+  (function(){
+    var c = nav.connection || nav.mozConnection || nav.webkitConnection;
+    if (c && c.addEventListener) c.addEventListener("change", refreshNet);
+  })();
+
+  // --- Position watch: dump EVERY GeolocationCoordinates field ---
+  function dumpPosition(pos){
+    var c = pos.coords;
+    fixCount++;
+    if (c.accuracy != null && c.accuracy < bestAcc) bestAcc = c.accuracy;
+    render("pos", [
+      ["fixes so far", fixCount],
+      ["latitude", c.latitude],
+      ["longitude", c.longitude],
+      ["accuracy (m)", c.accuracy, accClass(c.accuracy)],
+      ["best accuracy (m)", (bestAcc === Infinity ? null : Math.round(bestAcc)), accClass(bestAcc === Infinity ? null : bestAcc)],
+      ["altitude (m)", c.altitude],
+      ["altitudeAccuracy (m)", c.altitudeAccuracy],
+      ["heading (deg)", c.heading],
+      ["speed (m/s)", c.speed],
+      ["timestamp", new Date(pos.timestamp).toISOString()],
+      ["source hint", c.accuracy == null ? "?" : (c.accuracy <= 30 ? "GNSS (satellite)" : (c.accuracy <= 500 ? "Wi-Fi / cell" : "IP fallback / coarse")),
+        accClass(c.accuracy)]
+    ]);
+    var t = Math.round((Date.now() - startedAt) / 1000);
+    line("[" + t + "s] #" + fixCount + "  acc=" + (c.accuracy == null ? "?" : Math.round(c.accuracy)) + "m  " +
+         c.latitude.toFixed(5) + ", " + c.longitude.toFixed(5), accClass(c.accuracy));
+  }
+
+  function startWatch(){
+    if (watchId !== null){ line("Already watching.", "dim"); return; }
+    if (!("geolocation" in nav)){ line("No geolocation API. Cannot watch.", "bad"); return; }
+    var high = document.getElementById("high").checked;
+    startedAt = Date.now();
+    fixCount = 0;
+    bestAcc = Infinity;
+    line("--- watch started, highAccuracy=" + high + " ---", "dim");
+    watchId = nav.geolocation.watchPosition(
+      dumpPosition,
+      function(err){
+        var names = {1:"PERMISSION_DENIED", 2:"POSITION_UNAVAILABLE", 3:"TIMEOUT"};
+        line("ERROR code " + err.code + " (" + (names[err.code] || "?") + "): " + err.message, "bad");
+        render("pos", [["last error", "code " + err.code + " " + (names[err.code] || ""), "bad"], ["message", err.message, "bad"]]);
+      },
+      { enableHighAccuracy: high, timeout: 30000, maximumAge: 0 }
+    );
+  }
+
+  function stopWatch(){
+    if (watchId === null){ line("Not currently watching.", "dim"); return; }
+    nav.geolocation.clearWatch(watchId);
+    watchId = null;
+    line("--- stopped after " + fixCount + " fixes" + (bestAcc === Infinity ? "" : ", best " + Math.round(bestAcc) + "m") + " ---", "dim");
+  }
+
+  // --- Orientation / compass ---
+  var oriState = { alpha:null, beta:null, gamma:null, absolute:null, compass:null, compassAcc:null };
+  function renderOri(){
+    render("ori", [
+      ["alpha (Z / compass-ish)", oriState.alpha == null ? null : oriState.alpha.toFixed(1)],
+      ["beta (X / front-back tilt)", oriState.beta == null ? null : oriState.beta.toFixed(1)],
+      ["gamma (Y / left-right tilt)", oriState.gamma == null ? null : oriState.gamma.toFixed(1)],
+      ["absolute", oriState.absolute],
+      ["webkitCompassHeading", oriState.compass == null ? null : oriState.compass.toFixed(1)],
+      ["webkitCompassAccuracy", oriState.compassAcc]
+    ]);
+  }
+  renderOri();
+
+  function onOrientation(e){
+    oriState.alpha = e.alpha;
+    oriState.beta = e.beta;
+    oriState.gamma = e.gamma;
+    oriState.absolute = e.absolute;
+    if (typeof e.webkitCompassHeading !== "undefined") oriState.compass = e.webkitCompassHeading;
+    if (typeof e.webkitCompassAccuracy !== "undefined") oriState.compassAcc = e.webkitCompassAccuracy;
+    renderOri();
+  }
+
+  function enableOrientation(){
+    // iOS 13+ gates this behind a permission request that must be user-triggered.
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function"){
+      DeviceOrientationEvent.requestPermission().then(function(res){
+        line("Orientation permission: " + res, res === "granted" ? "ok" : "warn");
+        if (res === "granted") window.addEventListener("deviceorientation", onOrientation);
+      }).catch(function(err){
+        line("Orientation permission error: " + err.message, "bad");
+      });
+    } else if ("DeviceOrientationEvent" in window){
+      window.addEventListener("deviceorientationabsolute", onOrientation);
+      window.addEventListener("deviceorientation", onOrientation);
+      line("Orientation listeners attached (no permission gate).", "ok");
+    } else {
+      line("DeviceOrientationEvent not supported.", "warn");
+      render("ori", [["DeviceOrientationEvent", "not supported", "warn"]]);
+    }
+  }
+
+  // --- Copy full report ---
+  function collectReport(){
+    var out = [];
+    var sections = [["ENVIRONMENT","env"],["PERMISSION","perm"],["NETWORK","net"],["POSITION","pos"],["ORIENTATION","ori"]];
+    for (var s = 0; s < sections.length; s++){
+      out.push("== " + sections[s][0] + " ==");
+      var rows = document.getElementById(sections[s][1]).querySelectorAll("tr");
+      for (var r = 0; r < rows.length; r++){
+        var cells = rows[r].querySelectorAll("td");
+        if (cells.length === 2) out.push(cells[0].textContent + ": " + cells[1].textContent);
+      }
+      out.push("");
+    }
+    return out.join("\n");
+  }
+
+  function copyReport(){
+    var text = collectReport();
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){
+        line("Report copied to clipboard.", "ok");
+      }).catch(function(err){
+        line("Clipboard failed: " + err.message + " — report also printed below.", "warn");
+        line(text, "dim");
+      });
+    } else {
+      line("Clipboard API unavailable — report printed below:", "warn");
+      line(text, "dim");
+    }
+  }
+
+  document.getElementById("start").onclick = startWatch;
+  document.getElementById("stop").onclick = stopWatch;
+  document.getElementById("orient").onclick = enableOrientation;
+  document.getElementById("copy").onclick = copyReport;
+</script>
+</body>
+</html>
