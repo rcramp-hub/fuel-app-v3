@@ -2,6 +2,17 @@
 
 ---
 
+## Version 1.17
+**Date:** July 2026
+
+### Changes
+- **Elevation now shown on location pins.** Fuel events stamped with a full 3D GPS fix now display the elevation alongside the accuracy — for example “📍 ±13 m · ⛰️ 675 m”. This appears everywhere a location link is shown (trip history, refuel history, the recent-refuels list, and the capture summary). The altitude was already being recorded, so this lights up on existing stamped events too, not just new ones. Events without an altitude (fixes that were not a full 3D lock) show the accuracy alone, as before.
+
+### Note
+- GPS elevation is measured against the WGS84 ellipsoid, not mean sea level, so around this region it reads roughly 40 m higher than a topographic map's above-sea-level figure. It is consistent and repeatable, just offset from the sea-level reference — hence it is labelled simply as elevation.
+
+---
+
 ## Version 1.16
 **Date:** July 2026
 
