@@ -2,6 +2,14 @@
 
 ---
 
+## Version 1.16
+**Date:** July 2026
+
+### Changes
+- **Version number is now shown dynamically on both pages.** The footer version was hard-coded and had drifted out of date. It now reads the running app version directly from the service worker, so it always reflects the version actually loaded — useful for confirming an update took effect on the car head unit. The same version readout has been added to the HEV page footer.
+
+---
+
 ## Version 1.15
 **Date:** July 2026
 

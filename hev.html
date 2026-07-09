@@ -838,10 +838,20 @@
 
 <footer>
   <span>BYD Fuel Calculator</span><br>
-  © 2026 Ryan Cramp — All Rights Reserved
+  © 2026 Ryan Cramp — All Rights Reserved<br>
+  <span class="app-version" style="color:var(--muted); font-size:10px; letter-spacing:0.1em;">v1.16</span>
 </footer>
 
 <script>
+
+  // Running app version, read from the service-worker cache name (single source of truth)
+  (function(){
+    function cmpVer(a,b){var pa=a.split('.'),pb=b.split('.');for(var i=0;i<Math.max(pa.length,pb.length);i++){var na=parseInt(pa[i]||'0',10),nb=parseInt(pb[i]||'0',10);if(na!==nb)return na-nb;}return 0;}
+    function showAppVersion(){if(!('caches' in window))return;caches.keys().then(function(keys){var vers=[];keys.forEach(function(k){var m=k.match(/^fuel-v(.+)$/);if(m)vers.push(m[1]);});if(!vers.length)return;vers.sort(cmpVer);var v=vers[vers.length-1];document.querySelectorAll('.app-version').forEach(function(el){el.textContent='v'+v;});}).catch(function(){});}
+    showAppVersion();
+    if(navigator.serviceWorker){navigator.serviceWorker.addEventListener('controllerchange',showAppVersion);}
+  })();
+
 (function () {
 
   // ── Profile helpers (shared with index.html) ──────────────────────────────
