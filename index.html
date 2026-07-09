@@ -371,9 +371,9 @@
     <div class="settings-section-title">GPS location stamping</div>
     <div style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
       <span style="font-size:13px; color:var(--muted); flex:1;">Stamp trip-end &amp; refuel events with location</span>
-      <input type="checkbox" id="geo-enabled-input" onchange="setGeoEnabled(this.checked)" style="width:22px; height:22px; accent-color: var(--accent); flex-shrink:0;">
+      <input type="checkbox" id="geo-enabled-input" checked onchange="setGeoEnabled(this.checked)" style="width:22px; height:22px; accent-color: var(--accent); flex-shrink:0;">
     </div>
-    <div class="settings-note">When on, ending a trip or logging a refuel records a one-shot GPS location with the event. Your device will ask for location permission the first time. Each summary shows a <strong>Skip</strong> button to leave a single event un-stamped. Off by default.</div>
+    <div class="settings-note">When on, ending a trip or logging a refuel records a one-shot GPS location with the event. Your device will ask for location permission the first time. Each summary shows a <strong>Skip</strong> button to leave a single event un-stamped. On by default — untick it to stop stamping location on your events.</div>
   </div>
 
   <div class="settings-section">
@@ -691,6 +691,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     const _ovEl = document.getElementById('override-cal-input');
     if (_ovEl) _ovEl.value = _ov !== null ? _ov : '';
     renderOverrideStatus();
+    renderGeoToggle();
 
     // Check fill mode state
     fillModeActive = false;
@@ -813,7 +814,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
   window.setGeoEnabled = function(on) { pSet('geoEnabled', on ? '1' : '0'); };
   function renderGeoToggle() {
     const el = document.getElementById('geo-enabled-input');
-    if (el) el.checked = (pGet('geoEnabled') === '1');
+    if (el) el.checked = (pGet('geoEnabled') !== '0');
   }
   window.applyFuelOverride = function() {
     const el = document.getElementById('override-cal-input');
@@ -905,6 +906,9 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     const msg=document.getElementById('save-confirm');
     msg.textContent='\u2713 Calibration saved and applied'; msg.classList.add('show');
     setTimeout(()=>msg.classList.remove('show'),3000);
+    document.getElementById('settings-panel').classList.remove('open');
+    document.getElementById('settings-btn').classList.remove('open');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.resetToDefaults = function() {

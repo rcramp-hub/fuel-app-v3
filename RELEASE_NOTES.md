@@ -2,6 +2,18 @@
 
 ---
 
+## Version 1.15
+**Date:** July 2026
+
+### Fixes
+- **Location-stamping toggle now reflects and remembers its state.** The GPS location toggle in Settings was not syncing to its saved value when the page loaded, so it always appeared unticked after a reload even when stamping was actually active — and because the displayed state was disconnected from the stored setting, location could keep being saved with the box looking unticked. The toggle now correctly shows its real state on every load and on profile switches.
+
+### Changes
+- **Location stamping is now ON by default.** New profiles have GPS location stamping enabled from the start; untick the toggle in Settings to opt out. Your device still asks for location permission the first time an event is stamped, so nothing is captured without that separate permission being granted.
+- **Settings collapse after Save & apply.** Saving your calibration now closes the settings panel and returns you to the main display, which reflects the newly applied values.
+
+---
+
 ## Version 1.14
 **Date:** July 2026
 

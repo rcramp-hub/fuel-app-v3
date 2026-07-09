@@ -869,12 +869,12 @@
   }
 
   // ── GPS location stamping (optional) ─────────────────────────
-  // Toggle stored per-profile as 'geoEnabled' (set in the main app settings).
+  // Toggle stored per-profile as 'geoEnabled' (set in the main app settings). On by default; '0' means the user opted out.
   // When on, trip-end and refuel events are stamped with a one-shot GPS fix.
   // Never blocks or delays saving — if no fix arrives the event just saves plain.
   let _geoPending = null;   // last captured fix for the open summary, or null
   let _geoSkip    = false;  // one-time skip for the open summary
-  function geoOn() { return pGet('geoEnabled') === '1'; }
+  function geoOn() { return pGet('geoEnabled') !== '0'; }
   function geoCapture(cb) {
     if (!geoOn()) { cb(null, 'disabled'); return; }
     if (!('geolocation' in navigator)) { cb(null, 'unsupported'); return; }
