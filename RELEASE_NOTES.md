@@ -8,6 +8,10 @@
 ### New features
 - **Tap-to-map location links on fuel events.** Trip-end and refuel events that were stamped with a GPS location now show a small map link labelled with the fix accuracy (for example, “📍 ±13 m”). Tapping it opens a Google Maps pin drop at those coordinates in a new tab. The link appears in the trip history, on refuel entries, and on the confirmation summary immediately after a location is captured. Events without a stored location show nothing, exactly as before.
 
+### Improvements
+- **Tidier main-page readouts.** The static “Tank capacity seen by fuel sender” figure has been removed from the main page — it never changed as you drove, so it was reference information rather than a live reading. “Distance remaining” now sits alongside “To fill to sender capacity” on a single row, using the space more efficiently.
+- **Calculated Full value shown in calibration settings.** The BYD % calibration table now shows the interpolated litres at the sender's Full (100%) reading directly beneath it — the ceiling the factory sender can measure. It updates live as you edit the calibration, so you can see the effect of your readings before saving. This is the same value that was previously on the main page, now shown where it belongs.
+
 ### Notes
 - The link is built entirely from the coordinates already stored on the device — no map data is fetched until you tap it, and nothing is sent anywhere in the meantime.
 - The accuracy shown is the stored fix radius, so a tight head-unit fix reads very small (for example “±0.4 m”) while a phone fix reads larger.

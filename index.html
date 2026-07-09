@@ -259,9 +259,8 @@
   <div id="alert-box" class="alert"></div>
   <div class="stat-row">
     <div class="stat"><div class="stat-label">To fill to fuel sender capacity</div><div class="stat-val" id="to-fill">— <span>L</span></div></div>
-    <div class="stat"><div class="stat-label">Tank capacity seen by fuel sender</div><div class="stat-val" id="tank-cap-display">— <span>L</span></div></div>
+    <div class="stat"><div class="stat-label">Distance remaining</div><div class="stat-val" id="distance-remaining">— <span>km</span></div></div>
   </div>
-  <div class="stat"><div class="stat-label">Distance remaining</div><div class="stat-val" id="distance-remaining">— <span>km</span></div></div>
   <div class="card">
     <div class="tabs" style="margin-bottom:14px;">
       <button class="tab active" onclick="setTab('km')" id="tab-km">Dashboard km range</button>
@@ -334,7 +333,11 @@
   <div class="settings-section">
     <div class="settings-section-title">BYD App % at each fuel level</div>
     <table class="cal-table"><thead><tr><th>Fuel in tank</th><th>Default %</th><th>Your %</th></tr></thead><tbody id="byd-tbody"></tbody></table>
-    <div class="settings-note">Fill your tank to each level and note what % your BYD app shows. Greyed values are the original BYD calibration data for reference.</div>
+    <div style="padding:12px 16px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--border);">
+      <span style="font-size:12px; color:var(--muted); flex:1;">Calculated fuel at sender Full (100%)</span>
+      <span style="font-family:'Space Mono',monospace; font-size:18px; font-weight:700; color:var(--accent);" id="cal-full-val">— L</span>
+    </div>
+    <div class="settings-note">Fill your tank to each level and note what % your BYD app shows. Greyed values are the original BYD calibration data for reference. The calculated value above is the interpolated litres at the sender's Full (100%) reading — the ceiling the factory sender can measure.</div>
   </div>
   <div class="settings-section">
     <div class="settings-section-title">Total tank capacity</div>
@@ -783,7 +786,6 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     document.getElementById('litres').textContent=litres.toFixed(1);
     document.getElementById('litres').style.color=color;
     document.getElementById('to-fill').innerHTML=toFill.toFixed(1)+' <span>L</span>';
-    document.getElementById('tank-cap-display').innerHTML=tankCap.toFixed(1)+' <span>L</span>';
     const bar=document.getElementById('gauge-bar'); bar.style.width=tankPct+'%'; bar.style.background=color;
     const alert=document.getElementById('alert-box'); alert.className='alert';
     if(litres<=10){alert.className='alert danger';alert.textContent='\u26a0 Very low! Only '+litres.toFixed(1)+' L remaining \u2014 fill up now.';}
@@ -857,6 +859,15 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
   function renderTables() {
     renderTable('km-tbody',FIXED_LITRES,DEFAULT_KM,getCurrentKMreadings(),'km');
     renderTable('byd-tbody',FIXED_LITRES,DEFAULT_BYD,getCurrentBYDreadings(),'byd');
+    renderCalFull();
+  }
+  function renderCalFull() {
+    const el=document.getElementById('cal-full-val'); if(!el) return;
+    const bydReadings=[];
+    document.querySelectorAll('#byd-tbody .cal-input').forEach(inp=>{bydReadings[parseInt(inp.dataset.index)]=parseFloat(inp.value)||0;});
+    let litres=NaN;
+    try { if(bydReadings.length) litres=interp(100,buildTable(bydReadings,FIXED_LITRES)); } catch(e) {}
+    el.textContent=(isFinite(litres)&&litres>0)?(litres.toFixed(1)+' L'):'— L';
   }
 
   function renderTable(tbodyId,litresArr,defaults,current,type) {
@@ -870,7 +881,7 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     });
   }
 
-  window.onCalInput = function(el) { el.classList.toggle('modified',parseFloat(el.value)!==parseFloat(el.dataset.default)); };
+  window.onCalInput = function(el) { el.classList.toggle('modified',parseFloat(el.value)!==parseFloat(el.dataset.default)); renderCalFull(); };
 
   window.saveSettings = function() {
     const kmReadings=[],bydReadings=[];
