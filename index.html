@@ -112,6 +112,10 @@
   .settings-panel.open { display: flex; }
   .settings-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
   .settings-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .settings-section.collapsible .settings-section-title { cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; -webkit-user-select: none; }
+  .settings-section.collapsible .settings-section-title::after { content: "\25BE"; font-size: 12px; opacity: 0.7; transition: transform 0.2s ease; }
+  .settings-section.collapsible.collapsed .settings-section-title::after { transform: rotate(-90deg); }
+  .settings-section.collapsible.collapsed > :not(.settings-section-title) { display: none; }
   .settings-note { font-size: 11px; color: var(--muted); line-height: 1.6; padding: 10px 16px 14px; }
   .cal-table { width: 100%; border-collapse: collapse; }
   .cal-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 8px 8px; text-align: center; font-weight: 500; border-bottom: 1px solid var(--border); }
@@ -325,13 +329,13 @@
 </main>
 
 <div class="settings-panel" id="settings-panel">
-  <div class="settings-section">
-    <div class="settings-section-title">Dashboard km range at each fuel level</div>
+  <div class="settings-section collapsible collapsed">
+    <div class="settings-section-title" onclick="toggleCalSection(this)">Dashboard km range at each fuel level</div>
     <table class="cal-table"><thead><tr><th>Fuel in tank</th><th>Default km</th><th>Your km</th></tr></thead><tbody id="km-tbody"></tbody></table>
     <div class="settings-note">Fill your tank to each level and note what km range your dashboard shows. Greyed values are the original BYD calibration data for reference.</div>
   </div>
-  <div class="settings-section">
-    <div class="settings-section-title">BYD App % at each fuel level</div>
+  <div class="settings-section collapsible collapsed">
+    <div class="settings-section-title" onclick="toggleCalSection(this)">BYD App % at each fuel level</div>
     <table class="cal-table"><thead><tr><th>Fuel in tank</th><th>Default %</th><th>Your %</th></tr></thead><tbody id="byd-tbody"></tbody></table>
     <div style="padding:12px 16px; display:flex; align-items:center; gap:12px; border-top:1px solid var(--border);">
       <span style="font-size:12px; color:var(--muted); flex:1;">Calculated fuel at sender Full (100%)</span>
@@ -436,7 +440,7 @@
   <span style="color:var(--accent);">BYD Fuel Calculator</span><br>
   © 2026 Ryan Cramp — All Rights Reserved<br>
   <a href="userguide.html" style="color:var(--muted); text-decoration:none; border-bottom:1px solid var(--border); padding-bottom:1px; margin-top:4px; display:inline-block; letter-spacing:0.04em;">User Guide</a><br>
-  <span class="app-version" style="color:var(--surface2); font-size:10px; letter-spacing:0.1em; margin-top:2px; display:inline-block;">v1.16</span>
+  <span class="app-version" style="color:var(--surface2); font-size:10px; letter-spacing:0.1em; margin-top:2px; display:inline-block;">v1.18</span>
 </footer>
 
 <script>
@@ -857,6 +861,10 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
   };
 
   // ── Settings ────────────────────────────────────────────────────────────
+  window.toggleCalSection = function(titleEl) {
+    titleEl.parentElement.classList.toggle('collapsed');
+  };
+
   window.toggleSettings = function() {
     const panel=document.getElementById('settings-panel'), btn=document.getElementById('settings-btn');
     const isOpen=panel.classList.toggle('open'); btn.classList.toggle('open',isOpen);

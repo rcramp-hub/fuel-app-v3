@@ -2,6 +2,14 @@
 
 ---
 
+## Version 1.18
+**Date:** July 2026
+
+### Changes
+- **Calibration tables are now collapsible.** The two calibration tables in Settings (dashboard km range and BYD app %) are collapsed by default and can be expanded by tapping their heading. This frees up the settings screen unless you actually want to view or edit the calibration. Each heading shows a chevron indicating its state, and your calibration data and the calculated Full readout are unchanged — just tucked away until needed.
+
+---
+
 ## Version 1.17
 **Date:** July 2026
 
