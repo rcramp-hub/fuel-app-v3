@@ -193,6 +193,8 @@
   .geo-status { flex: 1; font-size: 12px; color: var(--muted); }
   .geo-skip-btn { -webkit-appearance: none; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: inherit; font-size: 12px; padding: 6px 12px; cursor: pointer; }
   .geo-skip-btn:active { border-color: var(--warn-mid); color: var(--warn); }
+  .geo-link { color: var(--blue); text-decoration: none; font-size: 11px; white-space: nowrap; }
+  .geo-link:active { text-decoration: underline; }
   .modal-btn {
     -webkit-appearance: none; padding: 12px;
     border-radius: 10px; font-family: 'DM Sans', sans-serif;
@@ -898,6 +900,15 @@
   function geoSetStatus(txt) {
     document.querySelectorAll('.geo-status').forEach(function(el) { el.textContent = txt; });
   }
+  function geoSetStatusHTML(html) {
+    document.querySelectorAll('.geo-status').forEach(function(el) { el.innerHTML = html; });
+  }
+  function geoMapUrl(loc) { return 'https://www.google.com/maps?q=' + loc.lat + ',' + loc.lng; }
+  function geoLinkHtml(loc) {
+    if (!loc || loc.lat == null) return '';
+    const label = (loc.acc != null) ? ('\uD83D\uDCCD \u00B1' + loc.acc + ' m') : '\uD83D\uDCCD location';
+    return '<a class="geo-link" href="' + geoMapUrl(loc) + '" target="_blank" rel="noopener">' + label + '</a>';
+  }
   function geoBeginCapture() {
     _geoPending = null;
     _geoSkip = false;
@@ -907,7 +918,7 @@
     geoSetStatus('\uD83D\uDCCD Getting location\u2026');
     geoCapture(function(loc, why) {
       _geoPending = loc;
-      if (loc) geoSetStatus('\uD83D\uDCCD Location ready (' + loc.acc + ' m)');
+      if (loc) geoSetStatusHTML(geoLinkHtml(loc));
       else if (why === 'denied') geoSetStatus('\uD83D\uDCCD Permission denied');
       else if (why === 'weak') geoSetStatus('\uD83D\uDCCD Signal too weak to stamp');
       else geoSetStatus('\uD83D\uDCCD Location unavailable');
@@ -1440,7 +1451,7 @@
             <div class="refuel-entry-icon">⛽</div>
             <div class="refuel-entry-info">
               <div class="refuel-entry-val">${r.entry.litres.toFixed(1)} L added</div>
-              <div class="refuel-entry-time">${time}</div>
+              <div class="refuel-entry-time">${time}${r.entry.loc ? ' <span style="color:var(--muted)">\u00B7</span> ' + geoLinkHtml(r.entry.loc) : ''}</div>
             </div>
             <button class="refuel-entry-remove" onclick="removeRefuel(${r.index})">Remove</button>
           </div>`;
@@ -1527,7 +1538,7 @@
               <div><div class="h-stat-label">Refuel added</div><div class="h-stat-val" style="${item.trip.refuelTotal>0?'color:var(--purple)':''}">${item.trip.refuelTotal>0?item.trip.refuelTotal.toFixed(1)+' L':'—'}</div></div>
             </div>
             <div class="history-date">
-              <span>${refChip}${date}</span>
+              <span>${refChip}${date}${item.entry.loc ? ' <span style="color:var(--muted)">\u00B7</span> ' + geoLinkHtml(item.entry.loc) : ''}</span>
               <button class="delete-btn" onclick="deleteEntry(${item.index})">✕ Remove</button>
             </div>
           </div>`;
@@ -1546,7 +1557,7 @@
               </div>
               <div class="refuel-info">
                 <div class="refuel-title">Refuel — ${item.entry.litres.toFixed(1)} L added</div>
-                <div class="refuel-detail">${date}</div>
+                <div class="refuel-detail">${date}${item.entry.loc ? ' <span style="color:var(--muted)">\u00B7</span> ' + geoLinkHtml(item.entry.loc) : ''}</div>
               </div>
               <button class="delete-btn" onclick="deleteEntry(${item.index})">✕</button>
             </div>

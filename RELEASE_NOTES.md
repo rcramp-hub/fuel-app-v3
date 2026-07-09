@@ -2,6 +2,18 @@
 
 ---
 
+## Version 1.14
+**Date:** July 2026
+
+### New features
+- **Tap-to-map location links on fuel events.** Trip-end and refuel events that were stamped with a GPS location now show a small map link labelled with the fix accuracy (for example, “📍 ±13 m”). Tapping it opens a Google Maps pin drop at those coordinates in a new tab. The link appears in the trip history, on refuel entries, and on the confirmation summary immediately after a location is captured. Events without a stored location show nothing, exactly as before.
+
+### Notes
+- The link is built entirely from the coordinates already stored on the device — no map data is fetched until you tap it, and nothing is sent anywhere in the meantime.
+- The accuracy shown is the stored fix radius, so a tight head-unit fix reads very small (for example “±0.4 m”) while a phone fix reads larger.
+
+---
+
 ## Version 1.13
 **Date:** July 2026
 
