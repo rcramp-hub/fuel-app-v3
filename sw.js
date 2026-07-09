@@ -1,4 +1,4 @@
-const CACHE = 'fuel-v1.18';
+const CACHE = 'fuel-v1.19';
 const ASSETS = [
   './index.html',
   './manifest.json',

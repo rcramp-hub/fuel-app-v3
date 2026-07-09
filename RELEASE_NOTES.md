@@ -2,6 +2,15 @@
 
 ---
 
+## Version 1.19
+**Date:** July 2026
+
+### Changes
+- **One save button for all settings.** Tank capacity is now saved by the main settings button along with your calibration, so the separate “Save tank capacity” button has been removed. Edit the capacity field and it saves with everything else.
+- **“Save & apply” is now “Save & Close.”** The button already closed the settings panel after saving; the label now reflects that. It saves your calibration and tank capacity, applies them, and closes Settings in one tap.
+
+---
+
 ## Version 1.18
 **Date:** July 2026
 

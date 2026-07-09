@@ -351,9 +351,6 @@
       <span style="font-size:12px; color:var(--muted);">L</span>
     </div>
     <div class="settings-note">This is the total volume of your aftermarket tank — not the sender's visible range. Used by the Fill to Full feature to calculate fuel remaining above the sender's measurement limit.</div>
-    <div style="padding:0 16px 14px;">
-      <button class="s-btn primary" style="width:100%;" onclick="saveTotalCap()">Save tank capacity</button>
-    </div>
   </div>
 
   <div class="settings-section">
@@ -384,7 +381,7 @@
     <div class="validation-msg" id="validation-msg"></div>
     <div class="settings-actions">
       <button class="s-btn" onclick="resetToDefaults()">Reset to defaults</button>
-      <button class="s-btn primary" onclick="saveSettings()">Save &amp; apply</button>
+      <button class="s-btn primary" onclick="saveSettings()">Save &amp; Close</button>
     </div>
     <div class="save-confirm" id="save-confirm">✓ Calibration saved and applied</div>
     <div class="last-updated" id="last-updated"></div>
@@ -440,7 +437,7 @@
   <span style="color:var(--accent);">BYD Fuel Calculator</span><br>
   © 2026 Ryan Cramp — All Rights Reserved<br>
   <a href="userguide.html" style="color:var(--muted); text-decoration:none; border-bottom:1px solid var(--border); padding-bottom:1px; margin-top:4px; display:inline-block; letter-spacing:0.04em;">User Guide</a><br>
-  <span class="app-version" style="color:var(--surface2); font-size:10px; letter-spacing:0.1em; margin-top:2px; display:inline-block;">v1.18</span>
+  <span class="app-version" style="color:var(--surface2); font-size:10px; letter-spacing:0.1em; margin-top:2px; display:inline-block;">v1.19</span>
 </footer>
 
 <script>
@@ -919,6 +916,8 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     pSet('calKMreadings',JSON.stringify(kmReadings));
     pSet('calBYDreadings',JSON.stringify(bydReadings));
     pSet('calLastUpdated',new Date().toISOString());
+    const capVal = parseFloat(document.getElementById('total-cap-input').value);
+    if (!isNaN(capVal) && capVal > 0) pSet('totalTankCap', capVal);
     renderTables(); showLastUpdated(); update();
     const msg=document.getElementById('save-confirm');
     msg.textContent='\u2713 Calibration saved and applied'; msg.classList.add('show');
@@ -974,15 +973,6 @@ if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js', 
     return saved ? parseFloat(saved) : 120;
   }
 
-  window.saveTotalCap = function() {
-    const val = parseFloat(document.getElementById('total-cap-input').value);
-    if (isNaN(val) || val <= 0) return;
-    pSet('totalTankCap', val);
-    const msg = document.getElementById('save-confirm');
-    msg.textContent = '✓ Tank capacity saved';
-    msg.classList.add('show');
-    setTimeout(() => msg.classList.remove('show'), 3000);
-  };
 
   function enterFillUI() {
     document.getElementById('fill-badge').classList.add('show');
