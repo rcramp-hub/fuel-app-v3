@@ -292,6 +292,14 @@
     color: var(--muted);
     margin-top: 2px;
   }
+  .econ-apply-btn {
+    -webkit-appearance: none; margin-top: 8px; padding: 5px 10px;
+    font-size: 11px; font-family: inherit; cursor: pointer;
+    background: var(--accent-dim); border: 1px solid var(--accent-mid);
+    border-radius: 7px; color: var(--accent);
+  }
+  .econ-apply-btn:active { background: rgba(45,255,143,0.22); }
+  .econ-apply-btn.done { background: transparent; border-color: var(--border); color: var(--muted); }
 
   .preview-note {
     font-size: 11px;
@@ -839,7 +847,7 @@
 <footer>
   <span>BYD Fuel Calculator</span><br>
   © 2026 Ryan Cramp — All Rights Reserved<br>
-  <span class="app-version" style="color:var(--muted); font-size:10px; letter-spacing:0.1em;">v1.17</span>
+  <span class="app-version" style="color:var(--muted); font-size:10px; letter-spacing:0.1em;">v1.20</span>
 </footer>
 
 <script>
@@ -1220,7 +1228,7 @@
     const economy  = dist > 0 && fuelUsed > 0 ? (fuelUsed / dist) * 100 : null;
     const valid    = economy !== null && economy > 0;
 
-    pendingPreview = { odo, fuel };
+    pendingPreview = { odo, fuel, economy };
 
     // Build colour for economy
     let ecoColor = 'var(--blue)';
@@ -1247,6 +1255,7 @@
           <div class="preview-stat-label">Economy</div>
           <div class="preview-stat-val ${ecoClass}">${valid ? economy.toFixed(1) : '\u2014'}</div>
           <div class="preview-stat-unit">L/100km</div>
+          ${valid ? '<button class="econ-apply-btn" onclick="applyEconomyOnly()">Update range</button>' : ''}
         </div>
         <div class="preview-stat">
           <div class="preview-stat-label">Refuel added</div>
@@ -1262,6 +1271,17 @@
 
     document.getElementById('preview-modal').classList.add('show');
   }
+
+  window.applyEconomyOnly = function() {
+    if (!pendingPreview || pendingPreview.economy == null || pendingPreview.economy <= 0) return;
+    try {
+      pSet('burnRate', pendingPreview.economy.toFixed(1));
+      const eb = document.getElementById('economy-updated-banner');
+      if (eb) { eb.classList.add('show'); setTimeout(function(){ eb.classList.remove('show'); }, 4000); }
+    } catch(e) {}
+    const btn = document.querySelector('.econ-apply-btn');
+    if (btn) { btn.textContent = '\u2713 Range updated'; btn.disabled = true; btn.classList.add('done'); }
+  };
 
   window.cancelPreview = function() {
     document.getElementById('preview-modal').classList.remove('show');

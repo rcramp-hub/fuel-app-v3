@@ -2,6 +2,14 @@
 
 ---
 
+## Version 1.20
+**Date:** July 2026
+
+### Changes
+- **Update range without ending a trip.** The trip preview now has an “Update range” button on the Economy figure. Tapping it pushes that trip’s economy into the app’s burn rate straight away, so distance-remaining and range are recalculated from your latest driving — without having to end the trip. Ending a trip still updates the economy as before; this just lets you refresh it mid-trip. The button appears only when a valid economy can be calculated.
+
+---
+
 ## Version 1.19
 **Date:** July 2026
 
