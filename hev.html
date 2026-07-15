@@ -1812,8 +1812,8 @@
         setTimeout(() => document.getElementById('wizard-odo-input').style.borderColor = '', 1500);
         return;
       }
-      if (last && odo <= last.odo) {
-        alert('HEV Odometer must be greater than the previous reading (' + last.odo.toLocaleString() + ' km).');
+      if (last && odo < last.odo) {
+        alert('HEV Odometer cannot be less than the previous reading (' + last.odo.toLocaleString() + ' km).');
         return;
       }
     }
@@ -1855,7 +1855,8 @@
     const last = lastODOEntry();
     if (!last) { preview.innerHTML = 'This will be your first HEV Odometer entry.'; return; }
     if (isNaN(odo)) { preview.innerHTML = 'Enter your HEV Odometer to see the trip summary.'; return; }
-    if (odo <= last.odo) { preview.innerHTML = '<span style="color:var(--danger);">Must be greater than previous (' + last.odo.toLocaleString() + ' km).</span>'; return; }
+    if (odo < last.odo) { preview.innerHTML = '<span style="color:var(--danger);">Cannot be less than previous (' + last.odo.toLocaleString() + ' km).</span>'; return; }
+    if (odo === last.odo) { preview.innerHTML = 'Trip already ended at this odometer — no new trip will be logged.'; return; }
     if (wizardLitres === null) { preview.innerHTML = 'Enter your fuel reading in Step 1 first.'; return; }
     const dist = odo - last.odo;
     const refuelTotal = refuelSinceLastODO();
@@ -1900,8 +1901,10 @@
     const totalCap = getTotalCap();
     const burnRate = parseFloat(document.getElementById('wizard-burn-slider').value);
     if (wizardLitres === null || isNaN(odo)) return;
-    // 1. End current trip
-    finaliseODO(odo, wizardLitres);
+    // 1. End current trip (skipped if a trip was already ended at this exact odometer)
+    const lastEntry = lastODOEntry();
+    const tripAlreadyEnded = !!(lastEntry && odo === lastEntry.odo);
+    if (!tripAlreadyEnded) finaliseODO(odo, wizardLitres);
     // 2. Log refuel event
     const litresAdded = Math.max(0, totalCap - wizardLitres);
     entries.push(geoAttach({ type: 'refuel', litres: parseFloat(litresAdded.toFixed(2)), ts: new Date().toISOString(), fillToFull: true }));
@@ -1917,7 +1920,9 @@
     renderAll();
     // 5. Show confirmation
     const banner = document.getElementById('economy-updated-banner');
-    banner.textContent = '\u2713 Trip ended, refuel logged, fill mode activated. Go to main app to track fuel by km driven.';
+    banner.textContent = tripAlreadyEnded
+      ? '\u2713 Refuel logged, fill mode activated. Go to main app to track fuel by km driven.'
+      : '\u2713 Trip ended, refuel logged, fill mode activated. Go to main app to track fuel by km driven.';
     banner.classList.add('show');
     setTimeout(() => banner.classList.remove('show'), 6000);
   };

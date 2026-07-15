@@ -2,6 +2,14 @@
 
 ---
 
+## Version 1.21
+**Date:** July 2026
+
+### Fixes
+- **Fill to Full now accepts the odometer of a trip you just ended.** Previously the wizard required the HEV Odometer to be strictly greater than the last entry, so ending a trip at the pump and then running Fill to Full forced a fake +1 km reading — which also created a phantom 1 km trip, because the wizard always ended a trip itself. The wizard now accepts an odometer equal to the last entry: it recognises the trip has already been ended, skips creating a duplicate trip, and just logs the refuel and activates fill mode. The trip preview explains this ("Trip already ended at this odometer — no new trip will be logged") and the confirmation banner reflects it. Entering a lower odometer than the previous reading is still rejected, and the original all-in-one flow (end trip + refuel + fill mode from a single higher reading) is unchanged.
+
+---
+
 ## Version 1.20
 **Date:** July 2026
 
